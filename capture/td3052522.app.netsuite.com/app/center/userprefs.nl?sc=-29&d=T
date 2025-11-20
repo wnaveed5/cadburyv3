@@ -1,0 +1,4 @@
+function page_init3() {
+getFormElementViaFormName('main_form', 'whence').value = '\/app\/center\/card.nl';
+getFormElementViaFormName('main_form', 'whence').defaultValue='\/app\/center\/card.nl';
+}

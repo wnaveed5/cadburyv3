@@ -1,0 +1,34 @@
+
+
+function updateHidePassword()
+{
+    jQuery('.hidepassword').each(function() {
+		var parent = this.parentNode;
+		var t = 'text';
+        jQuery('input[name=pwdstate]').each(function() {t = this.checked? 'password': 'text'});
+		var input = document.createElement('input');
+		input.type = t;
+		input.name = this.getAttribute("name");
+		input.size = this.getAttribute("size");
+	    input.disabled = this.getAttribute("disabled");
+		var i = this.getAttribute("id");
+        parent.removeChild(this);
+		this.id = i + "_REMOVE";
+		input.id = i;
+		input.className = this.className;
+		input.value = this.value;
+		parent.appendChild(input);
+	});
+	jQuery('.hidepassword').attr('autocomplete','off');
+	return true;
+}
+function fixHidePasswordCheckbox()
+{
+	jQuery('input[name=pwdstate]').attr('onClick','updateHidePassword();');
+}
+
+jQuery().ready(function() {
+	updateHidePassword();
+//	fixHidePasswordCheckbox();
+});
+

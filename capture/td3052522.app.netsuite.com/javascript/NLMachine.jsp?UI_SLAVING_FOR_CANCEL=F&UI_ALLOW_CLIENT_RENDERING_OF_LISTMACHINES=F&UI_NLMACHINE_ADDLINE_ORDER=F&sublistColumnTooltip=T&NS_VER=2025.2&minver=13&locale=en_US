@@ -1,0 +1,5133 @@
+
+
+
+
+
+
+
+var min_segment_size = 5;
+var max_segment_size = 25;
+
+var editmachineCounter = 0;
+var editmachineConstructorTime = 0;
+
+var EDIT_MACHINE = "EDIT_MACHINE";
+var LIST_MACHINE = "LIST_MACHINE";
+
+function Machine(name, mainform, miniform, tableobj, allow_insert, dataManager)
+{
+    this.name = name;
+    this.type = EDIT_MACHINE;
+    this.mainform = mainform;
+    this.miniform = miniform;
+
+    this.tableobj = tableobj;
+    if(this.tableobj != null)
+        this.tableobj.machine = this;
+    this.allow_insert = allow_insert;
+    this.tableborder = false;
+    this.isinline = false;
+    this.hasInterceptedEvents = false;
+    
+    this.ischanged = false;
+    
+    this.waschanged = false;
+    
+    this.isdeleting = false;
+    this.showEditor = true;
+    this.showRowNumbers = false;
+    this.rowNumberLabel = '#';
+    this.autoEdit = true;
+    this.sortable = false;
+    this.allowMoveLines = false;
+    this.allowQuickDeleteLines = false;
+    this.showButtons = true;
+    this.moveButtons = true;
+    this.sortDirUp = true;
+    this.sortIndex = -1;
+    this.allWhiteDisplayMode = false;
+    this.fieldSetIncludesCancelButton = false;
+    this.addonly = false;
+    this.savedState = {};
+    this.indentFirstVisibleColumn = false;
+    this.transferTimeout = null;
+    this.postBuildTableListeners = [];
+
+    
+    if (name)
+    {
+        this.form_elems = splitIntoCells( this.mainform.elements[name+"fields"].value );
+        this.table_labels = splitIntoCells( this.mainform.elements[name+"labels"].value );
+        this.miniform_elem_types = splitIntoCells( this.mainform.elements[name+"types"].value );
+        this.miniform_elem_flags = splitIntoCells( this.mainform.elements[name+"flags"].value );
+        this.miniform_elem_fieldsets = splitIntoCells( this.mainform.elements[name+"fieldsets"].value );
+
+        // ugly code to keep the sets synchronized (issue 308448)
+        // This code keep all 5 above sets synchronized - "save_record" function adds 3 fixed values into 2 sets.
+        // Sets are keep in 2 field values (name+"fields") and (name+"types") as aditional information.
+        // sys_parentid, sys_id, sys_op are added during saving process and it will mess-up the form if the saving is not completed
+        if (this.form_elems.length >= 3 &&
+            this.form_elems[0] == "sys_parentid" && this.form_elems[1] == "sys_id" && this.form_elems[2] == "sys_op")
+        {
+            this.form_elems = this.form_elems.slice(3, this.form_elems.length);
+            this.miniform_elem_types = this.miniform_elem_types.slice(3, this.miniform_elem_types.length);
+        }
+    }
+    
+    this.elementCache = {};
+    
+
+
+    
+    this.recalcType = null;
+    this.lastRecalcType = null;
+
+    
+    this.currentRowNum = 0;
+    this.segmentSelect = null;
+    this.segmentSize = max_segment_size;
+    this.segmentSelectLineCount = -1;
+    this.segmentSelectOptions = null;
+    this.segmentStartIndex = 1;
+    this.lastStartSegmentIndex = 1;
+    this.segmentable = false;
+    this.isCurrentlySegmented = true;
+
+    
+    this.doCheckMandatoryData = Machine_doCheckMandatoryData;
+    this.synclinefields = Machine_lineInit;
+    this.validatedelete = Machine_validatedelete;
+    this.validateinsert = Machine_validateinsert;
+    this.validateline = Machine_validateline;
+    this.preSelectRow = Machine_preSelectRow;
+    this.getDisplayCellContentOverride = Machine_getDisplayCellContentOverride;
+    this.customizeDisplayCell = Machine_customizeDisplayCell;
+    this.getFieldOverride = Machine_getFieldOverride;
+    this.getRowFormElementTypeOverride = null;
+    this.isFieldEditableOverride = Machine_isFieldEditableOverride;
+    this.isNeedUpdateFieldDisplayValue = Machine_isNeedUpdateFieldDisplayValue;
+    this.postBuildTable = Machine_postBuildTable;
+    this.postdeleteline = Machine_postdeleteline;
+    this.postEditRow = Machine_postEditRow;
+    this.postprocessline = Machine_lineCommit;
+    this.recalc = Machine_recalc;
+
+    editmachineCounter++;
+
+    if(typeof this.name != "undefined")
+    {
+        if (!window.machines)
+            window.machines = {};
+        window.machines[this.name] = this;
+    }
+
+    this.bInitFormInputValues = false;
+    if(dataManager)
+    {
+        this.dataManager = dataManager;
+        if (this.isRecordManagerUsed() && this.dataManager.getNumRows() > 0)
+        {
+            var numRows = this.dataManager.getNumOfRows();
+            this.setIndex(numRows + 1);
+            if (this.allow_insert)
+                this.setMachineIndex(numRows + 1);
+            else
+            {
+                this.setMachineIndex(numRows);
+                this.bInitFormInputValues = true;
+            }
+            this.dataManager.addListener(this);
+        }
+        else
+            this.setMachineIndex(this.getMachineIndex());
+    }
+    else
+        this.dataManager = new NLMachineDataManager(this);
+}
+
+
+
+Machine.prototype.getSegmentAdjustedRowNum = function Machine_getSegmentAdjustedRowNum()
+{
+    if(this.segmentable)
+        return this.currentRowNum + Math.max(0,(this.segmentStartIndex - 1));
+    else
+        return this.currentRowNum;
+};
+
+Machine.prototype.getAdjustedSegmentIndex = function Machine_getAdjustedSegmentIndex(base, bAdd)
+{
+    if(this.segmentable)
+        return base - ( (bAdd ? -1 : 1 )* (Math.max(0,this.segmentStartIndex-1)) ) ;
+    else
+        return base;
+};
+
+Machine.prototype.getFieldIdxMap = function Machine_getFieldIdxMap()
+{
+    var fields = document.forms['main_form'][this.name + 'fields'].value;
+    var fieldsArray = fields.split(String.fromCharCode(1));
+    var fieldIdx = {};
+    for (var i = 0; i < fieldsArray.length; i++) {
+        fieldIdx[fieldsArray[i].toLowerCase()] = i;
+    }
+    return fieldIdx;
+};
+
+Machine.prototype.updateSegmentation = function Machine_updateSegmentation(newSegmentStartIndex, lineCount)
+{
+    var totalSegments = Math.ceil(lineCount / this.segmentSize);
+    var bShowAll = newSegmentStartIndex == -1;
+    var hasMoreSegments = totalSegments > 1;
+
+    if (this.segmentable && (hasMoreSegments || bShowAll))
+    {
+        if (this.segmentSelectLineCount != lineCount) { // Don't rebuild if not necessary - it's slow
+            this.segmentSelectLineCount = lineCount;
+            this.segmentSelectOptions = this.getSegmentSelectOptions(lineCount);
+            this.rebuildSegmentSelect(this.getSegmentSelect(), this.segmentSelectOptions);
+        }
+
+        if (bShowAll) {
+            this.isCurrentlySegmented = false;
+	        this.segmentStartIndex = 1;
+            this.lastStartSegmentIndex = 1;
+	        setFormValue(this.getSegmentSelect(), -1);
+        } else {
+            var activeSegment = this.getActiveSegmentOption(newSegmentStartIndex, this.segmentSelectOptions);
+            this.segmentStartIndex = activeSegment.start;
+            this.isCurrentlySegmented = true;
+            this.lastStartSegmentIndex = this.segmentSelectOptions[this.segmentSelectOptions.length - 2].start;
+
+            if (this.getMachineIndex() < activeSegment.start || this.getMachineIndex() > activeSegment.end) {
+	            this.setMachineIndex(this.getNextIndex());
+            }
+			setFormValue(this.getSegmentSelect(), this.segmentStartIndex);
+        }
+    }
+    else
+    {
+        
+        this.segmentStartIndex = 1;
+        this.lastStartSegmentIndex = 1;
+        this.isCurrentlySegmented = false;
+    }
+
+    
+    showFieldAndLabel(this.name+"_segment_select_fs", this.segmentable && hasMoreSegments);
+
+    
+    if (this.isCurrentlySegmented)
+    {
+        NS.jQuery(this.getSegmentSelect()).closest('td').prev().css('width', '80%');
+    }
+};
+
+Machine.prototype.rebuildSegmentSelect = function Machine_rebuildSegmentSelect(select, options)
+{
+    deleteAllSelectOptions(select);
+    for (var i = 0; i < options.length; i++) {
+        var option = options[i];
+        addSelectOption(document, select, option.key, option.value, false);
+    }
+};
+
+Machine.prototype.getActiveSegmentOption = function Machine_getActiveSegmentOption(segmentStart, segmentOptions)
+{
+    var optionCount = segmentOptions.length;
+    for (var i = 0; i < optionCount - 1; i++) {
+        var option = segmentOptions[i];
+        if (segmentStart >= option.start && segmentStart <= option.end) {
+            return option;
+        }
+    }
+    return segmentOptions[0]; // Start index is invalid, return the first option
+};
+
+Machine.prototype.getSegmentSelectOptions = function Machine_getSegmentSelectOptions(lineCount)
+{
+    var totalSegments = Math.ceil(lineCount / this.segmentSize),
+        options = [],
+        startSegment = 1;
+
+    for (var i = 0; i < totalSegments; i++) {
+        var endSegment = Math.min(startSegment + this.segmentSize - 1, lineCount);
+        options.push({
+            key: startSegment + " - " + endSegment + " of " + lineCount,
+            value: startSegment,
+            start: startSegment,
+            end: endSegment
+        });
+        startSegment += this.segmentSize;
+    }
+
+    
+    options.push({
+        key: 'All',
+        value: -1,
+        start: 1,
+        end: lineCount
+    });
+
+    return options;
+};
+
+Machine.prototype.getSegmentSelect = function Machine_getSegmentSelect()
+{
+    
+    if(this.segmentSelect == null)
+    {
+        var selectName = this.name+"_segment_select";
+        //var selInpt = document.getElementById(selectName);
+        var selInpt = document.forms[this.name+"_form"].elements[selectName];
+        this.segmentSelect = selInpt;
+    }
+    return this.segmentSelect;
+};
+
+Machine.prototype.getTableName = function Machine_getTableName()
+{
+    return this.tableobj == null ? null : this.tableobj.id;
+};
+
+Machine.prototype.getFormName = function Machine_getFormName( )
+{
+    return this.miniform.name;
+};
+
+
+Machine.prototype.getFormElementType = function Machine_getFormElementType( nIndex)
+{
+    return this.miniform_elem_types[ nIndex ];
+};
+
+
+Machine.prototype.getRowFormElementType = function Machine_getRowFormElementType( nIndex, rowNum )
+{
+    var type = null;
+    if (this.getRowFormElementTypeOverride)
+        type = this.getRowFormElementTypeOverride (nIndex, rowNum);
+    if (type != null)
+        return type;
+
+    return this.getFormElementType(nIndex);
+};
+
+
+Machine.prototype.getFormElementName = function Machine_getFormElementName( nIndex )
+{
+    return this.form_elems[ nIndex ];
+};
+
+
+Machine.prototype.getFormElementLabel = function Machine_getFormElementLabel( nIndex )
+{
+    return this.table_labels[nIndex];
+};
+
+Machine.prototype.setFormElementLabel = function Machine_setFormElementLabel( fieldName, sLabel )
+{
+    this.table_labels[ this.getArrayPosition(fieldName) ] = sLabel;
+};
+
+Machine.prototype.getFormElementFieldSet = function Machine_getFormElementFieldSet( nIndex )
+{
+    return this.miniform_elem_fieldsets[ nIndex ];
+};
+
+Machine.prototype.countFormElements = function Machine_countFormElements()
+{
+    return this.form_elems.length;
+};
+
+
+Machine.prototype.getFormElement = function Machine_getFormElement( nIndex, linenum )
+{
+    var name = this.getFormElementName(nIndex) + (linenum > 0 ? linenum : "");
+
+    return this.elementCache[name] || (this.elementCache[name] = getFormElement(this.miniform, name));
+};
+
+Machine.prototype.getInputElements = function Machine_getInputElements(allElements, fieldnames)
+{
+    
+    var returnMe = [];
+    if (!fieldnames)
+        fieldnames = this.getFormFieldNames();
+    var lastWasDisplay = false;
+    if ( this.idMap == null )
+        this.createEditorMap();
+
+    for (var i=0; i < fieldnames.length; i++)
+    {
+        var field = null;
+        var label = (lastWasDisplay) ? this.getFormElementLabel(i-1) : this.getFormElementLabel(i);
+
+        field = this.idMap[i];
+
+        if (allElements != true && (label == null || label.length == 0 || this.getFormElementFieldSet(i).length > 0))
+            field = null;
+        returnMe[returnMe.length] = field;
+
+        lastWasDisplay = this.isElementPopupDisplayField(i);
+    }
+
+    return returnMe;
+};
+
+Machine.prototype.getElementDisplayLabel = function Machine_getElementDisplayLabel( nIndex )
+{
+    return this.getFormElementLabel( nIndex ).length > 0
+            ? this.getFormElementLabel( nIndex )
+            : this.getFormElementLabel( nIndex - 1 );
+};
+
+Machine.prototype.isElementDisplayOnlyWithField = function Machine_isElementDisplayOnlyWithField( nIndex )
+{
+    return (this.miniform_elem_flags[ nIndex ] & 32) != 0;
+};
+Machine.prototype.isElementPopupDisplayField = function Machine_isElementPopupDisplayField( nIndex )
+{
+    return (this.miniform_elem_flags[ nIndex ] & 8) != 0;
+};
+
+Machine.prototype.isElementRequired = function Machine_isElementRequired( nIndex )
+{
+    return (this.miniform_elem_flags[ nIndex ] & 1) != 0;
+};
+
+Machine.prototype.getElementRequired = function Machine_getElementRequired( fieldName )
+{
+    var nIndex = this.getArrayPosition( fieldName );
+    return (this.miniform_elem_flags[ nIndex ] & 1) != 0;
+};
+
+Machine.prototype.setElementRequired = function Machine_setElementRequired( fieldName, bRequired )
+{
+    var nIndex = this.getArrayPosition( fieldName );
+    if (bRequired)
+        this.miniform_elem_flags[ nIndex ] |= 1;
+    else
+        this.miniform_elem_flags[ nIndex ] &= ~1;
+    var curElement = this.getFormElement( nIndex );
+    if(curElement.machine == undefined) {
+        curElement.machine = this;
+    }
+    setRequired(curElement, bRequired);
+};
+
+Machine.prototype.isCurrentRowRequired = function Machine_isCurrentRowRequired( )
+{
+    return this.isRowRequired( this.getMachineIndex() );
+};
+
+
+
+Machine.prototype.isElementNoCopy = function Machine_isElementNoCopy( nIndex )
+{
+    return (this.miniform_elem_flags[ nIndex ] & 2) != 0;
+};
+
+
+Machine.prototype.isFieldEditable = function Machine_isFieldEditable(nIndex, rowNum)
+{
+    if (typeof rowNum == "undefined" || rowNum == null)
+        rowNum = this.getMachineIndex();
+    var bEditable = this.isFieldEditableOverride(nIndex, rowNum);
+    if (bEditable != null)
+        return bEditable;
+
+    bEditable = false;
+    var curType = this.getFormElementType( nIndex );
+    var curName = this.getFormElementName( nIndex );
+    var curElement = this.getFormElement( nIndex );
+    
+    var bPrevIsDisplay = (nIndex > 0 && this.isElementPopupDisplayField(nIndex-1))
+    var curLabel   = bPrevIsDisplay ? this.getFormElementLabel( nIndex - 1 ) : this.getFormElementLabel( nIndex );
+
+
+    if (curLabel == null || curLabel.length == 0 || this.isElementDisplayOnlyWithField(nIndex) || this.getFormElementFieldSet(nIndex).length > 0)
+    {
+        
+    }
+    else if ( curType == "select" )
+    {
+        if( bPrevIsDisplay )
+        {
+            
+            curElement = this.getFormElement(nIndex - 1);
+        }
+        bEditable = !curElement.disabled;
+    }
+    else if ( curType == "slaveselect")
+    {
+        bEditable = !getFieldDisabled(curElement);
+    }
+    else if (curType == "integer" && bPrevIsDisplay)
+    {
+        
+        if(curElement.disabled)
+        {
+            bEditable = (curElement.type != "hidden");
+        }
+        else
+        {
+            var displayElement = this.getFormElement( nIndex - 1 );
+
+            if(displayElement.type == "hidden")
+            {
+                bEditable = true;
+                if(window.getDropDown)
+                {
+                    var dd = getDropDown(displayElement);
+                    bEditable = !dd.disabled;
+                }
+            }
+            else
+            {
+                bEditable = !displayElement.disabled;
+            }
+        }
+    }
+    else if (curType == "fieldset")
+    {
+        
+        bEditable = true;
+    }
+    else if (curType == "namevaluelist")
+    {
+        
+        bEditable = true;
+        curElement = curElement.form.elements[curElement.name+"_display"];
+    }
+    else if (curType == "color")
+    {
+        bEditable = true;
+    }
+    else if (curType == "summary")
+    {
+        bEditable =  !curElement.disabled;
+    }
+    else if (isNumericField( curElement ) || isCurrencyField(curElement))
+    {
+        bEditable = !getNLNumericOrCurrencyFieldDisabled(curElement);
+        curElement = getNLNumericOrCurrencyDisplayField(curElement);
+    }
+    else
+    {
+        bEditable = (curElement.type != "hidden") && !curElement.disabled && !this.isElementPopupDisplayField(nIndex);
+    }
+
+    return bEditable ? curElement : false;
+};
+
+
+Machine.prototype.isPopupSelect = function Machine_isPopupSelect(field)
+{
+    var input = null;
+    if (!field)
+        return;
+    var elems = field.getElementsByTagName("INPUT");
+    for ( var i = 0; i < elems.length; i++ )
+    {
+        if (elems[i].type == "hidden")
+        {
+            input = elems[i];
+            break;
+        }
+    }
+    if (input)
+        return isPopupSelect(input);
+    return false;
+};
+
+
+Machine.prototype.isPopupMultiSelect = function Machine_isPopupMultiSelect(field)
+{
+    var input = null;
+    if (!field)
+        return;
+    var elems = field.getElementsByTagName("INPUT");
+    for ( var i = 0; i < elems.length; i++ )
+    {
+        if (elems[i].type == "hidden")
+        {
+            input = elems[i];
+            break;
+        }
+    }
+    if (input)
+        return isPopupMultiSelect(input);
+    return false;
+};
+
+Machine.prototype.setAddOnly = function Machine_setAddOnly(bAddOnly)
+{
+    this.addonly = bAddOnly;
+};
+
+Machine.prototype.addOnly = function Machine_addOnly()
+{
+    return this.addonly;
+};
+
+Machine.prototype.machineIsVisible = function Machine_machineIsVisible(i)
+{
+    var machineContainer = document.getElementById(this.name+"_layer");
+    return machineContainer.style.display != "none" &&
+        machineContainer.style.visibility == "inherit" ?
+            machineContainer.parentNode.style.visibility == "visible" || machineContainer.parentNode.style.visibility == "" :
+            machineContainer.style.visibility == "visible";
+};
+
+Machine.prototype.setEnableEdit = function Machine_setEnableEdit(bEnable, bRenderNow, bInsert)
+{
+    if (!this.isinline)
+        return;
+
+    bEnable = (bEnable != false);
+    if(bEnable)
+    {
+        this.showEditor = true;
+        if (typeof bInsert != "undefined" && bInsert != null)
+            this.allow_insert = bInsert;
+        else if (typeof this.savedState.allow_insert != "undefined")
+            this.allow_insert = this.savedState.allow_insert;
+        if (typeof this.savedState.allowMoveLines != "undefined")
+            this.allowMoveLines = this.savedState.allowMoveLines;
+    }
+    else
+    {
+
+        this.savedState.allow_insert = this.allow_insert;
+        this.savedState.allowMoveLines = this.allowMoveLines;
+        this.allow_insert = false;
+        this.showEditor = false;
+        this.allowMoveLines = false;
+    }
+    if (bRenderNow == true)
+        this.buildTable();
+};
+
+Machine.prototype.clearSavedState = function Machine_clearSavedState()
+{
+    this.savedState = {};
+};
+
+
+
+Machine.prototype.getNextIndex = function Machine_getNextIndex( )
+{
+    return parseInt(this.mainform.elements['next'+this.name+'idx'].value);
+};
+
+Machine.prototype.getMaxIndex = function Machine_getMaxIndex( )
+{
+
+    return this.getNextIndex( );
+
+};
+
+Machine.prototype.getMachineIndex = function Machine_getMachineIndex( )
+{
+	if (this.miniform.elements[this.name + "_lineindex"])
+		return parseInt(this.miniform.elements[this.name + "_lineindex"].value);
+	return parseInt(this.miniform.elements["lineindex"].value);
+};
+
+Machine.prototype.setMachineIndex = function Machine_setMachineIndex( nNewIndex )
+{
+    for ( var key in window.subrecordcache )
+    {
+        if ( key.indexOf(this.name) == 0 && window.subrecordcache[key] )
+            window.subrecordcache[key].commit();
+    }
+    this.doSetMachineIndex(nNewIndex);
+    var bNewRow = this.dataManager.setActiveLine(nNewIndex, this.allow_insert);
+    if (bNewRow && !window.virtualBrowser)
+        this.dataManager.setInitialFieldValues(this.getLineData(), this.dataManager.activeRowIdx); 
+};
+
+Machine.prototype.doSetMachineIndex = function Machine_doSetMachineIndex( nNewIndex )
+{
+     if (this.miniform.elements[this.name + "_lineindex"])
+        this.miniform.elements[this.name + "_lineindex"].value = nNewIndex;
+    if (this.miniform.elements["lineindex"] != null)
+        this.miniform.elements["lineindex"].value = nNewIndex;
+};
+
+Machine.prototype.incrementIndex = function Machine_incrementIndex( )
+{
+    
+    this.mainform.elements['next'+this.name+'idx'].value -= -1;
+};
+
+Machine.prototype.decrementIndex = function Machine_decrementIndex( )
+{
+    this.mainform.elements['next'+this.name+'idx'].value -= 1;
+};
+
+Machine.prototype.setIndex = function Machine_setIndex( nIndex )
+{
+    this.mainform.elements['next'+this.name+'idx'].value = parseInt(nIndex);
+};
+
+
+
+Machine.prototype.requiresClearingOnReset = function Machine_requiresClearingOnReset(nIndex)
+{
+    var curType = this.getFormElementType(nIndex);
+    if (curType == "select" || curType == "slaveselect" || curType == "fieldset" ||
+        curType == "namevaluelist" || curType == "checkbox" || curType == "radio")
+    {
+        return false;
+    }
+    else
+        return true;
+};
+
+
+Machine.prototype.getFieldSetIncludesCancelButton = function Machine_getFieldSetIncludesCancelButton()
+{
+    return this.fieldSetIncludesCancelButton;
+};
+
+Machine.prototype.getFieldSetDoneAction = function Machine_getFieldSetDoneAction()
+{
+    return this.name + "_machine.gotoField(1); setEventCancelBubble(evnt); return false;";
+};
+
+
+
+Machine.prototype.setPreferredValue = function Machine_setPreferredValue(linenum)
+{
+    return setPreferredFields( this.name, this.preferredfield, this.preferredwithinfield, linenum )
+};
+
+
+Machine.prototype.fieldHasFocus = function Machine_fieldHasFocus( fieldName )
+{
+    var nIndex = this.getArrayPosition( fieldName );
+    return nIndex == this.focusedColumn;
+};
+
+
+Machine.prototype.setFocusToCurrentColumn = function Machine_setFocusToCurrentColumn()
+{
+    this.setFocus(this.focusedColumn, false);
+};
+
+Machine.prototype.setFocusToFirstEditable = function Machine_setFocusToFirstEditable()
+{
+    if(this.isinline)
+    {
+        var iFocusedColumn = this.focusedColumn;
+        this.gotoField(this.getFieldOffset(-1, 1), true);
+        if(iFocusedColumn == this.focusedColumn)
+        {
+            
+            this.setFocus(this.focusedColumn);
+        }
+    }
+};
+
+
+
+Machine.prototype.getFieldOffset = function Machine_getFieldOffset(iStartColumn, delta, bAutoOpenFieldset)
+{
+    for (var i = iStartColumn + delta; (i < this.countFormElements()) && (i >=0) ; i += delta)
+    {
+        if(this.isFieldEditable(i) && (bAutoOpenFieldset || this.getFormElementType(i) != "fieldset") )
+        {
+            return i;
+        }
+    }
+    return (iStartColumn == -1 ) ? 0 : iStartColumn;
+};
+
+
+Machine.prototype.setColToFirstEditable = function Machine_setColToFirstEditable(bAutoOpenFieldset)
+{
+    this.focusedColumn = this.getFieldOffset(-1, 1, bAutoOpenFieldset);
+};
+
+
+
+
+Machine.prototype.createEditorMap = function Machine_createEditorMap()
+{
+    this.idMap = [];
+    var lastWasDisplay = false;
+    var fieldnames = this.getFormFieldNames();
+
+    for (var i=0; i < fieldnames.length; i++)
+    {
+        //get the field by id
+        var editorName = this.name + "_" + fieldnames[i] + "_fs";
+        var field = document.getElementById(editorName);
+
+        //otherwise get the field by id
+        if(!field)
+        {
+            editorName = this.name + "_" + fieldnames[i] + "_fs";
+            field = document.getElementById(editorName);
+        }
+
+        if(field)
+        {
+            field.indexOfEditor = lastWasDisplay ? i-1 : i;
+            this.idMap[i] = field;
+        }
+        lastWasDisplay = this.isElementPopupDisplayField(i);
+    }
+};
+
+Machine.prototype.isRecordManagerUsed = function Machine_isRecordManagerUsed()
+{
+    return this.dataManager && this.dataManager.getNumOfRows;
+};
+
+
+
+
+ 
+
+
+
+
+Machine.prototype.showMachine = function Machine_showMachine(shown)
+{
+    document.getElementById(this.name+"_layer").style.display = shown ? "" : "none";
+};
+
+
+Machine.prototype.refresheditmachine = function Machine_refreshEditMachine(bNoFocus)
+{
+    this.setMachineIndex( this.getNextIndex() );
+    this.buildtable(null, bNoFocus);
+    return true;
+};
+
+
+
+Machine.prototype.buildtable = function Machine_buildtable(startIndex, bNoFocus, bExpandCurrentRow)
+{
+
+    if (this.insideBuildTable) {  // Prevent calling buildtable from buildtable
+        return false;
+    }
+    this.insideBuildTable = true;
+    this.tableobj.classList.toggle('uir-edit-machine-ordered', this.allowMoveLines);
+
+    try {
+        var startTime = new Date().getTime();
+
+        
+        var timerID = this.transferTimeout;
+        if(timerID)
+            clearTimeout(timerID);
+        this.transferTimeout = null;
+
+        if(window.fieldSetDiv != null && window.fieldSetDiv.parentNode)
+        {
+            var parent = window.fieldSetDiv.parentNode;
+            parent.removeChild(window.fieldSetDiv);
+        }
+
+        
+        if ((this.currentRowNum == 0 && !this.allow_insert) || this.bInitFormInputValues)
+        {
+            this.setupLineData(this.getMachineIndex());
+            if (this.bInitFormInputValues)
+                this.bInitFormInputValues = false;
+        }
+
+        this.currentRowNum = 0;      
+        if (this.isinline && !this.hasInterceptedEvents)
+        {
+            
+            for (var i=0; i < this.countFormElements(); i++)
+            {
+                if (this.getFormElementFieldSet(i).length == 0)
+                    Mch_setUpEventHandlerInterception(this, this.getFormElement(i), this.getFormElementType(i));
+            }
+            this.hasInterceptedEvents = true;
+        }
+
+        this.suspendEdit();
+
+        this.renderTable(startIndex, bNoFocus, bExpandCurrentRow);
+
+        window.status = "";
+        this.hasRendered = true;
+
+        this.postBuildTable();
+
+        if (this.postBuildTableListeners)
+        {
+            var cnt = this.postBuildTableListeners.length;
+            for (var i = 0; i < cnt; i++)
+            {
+                var listener = this.postBuildTableListeners[i];
+                if (typeof listener == "function")
+                {
+                    listener.call(this);
+                }
+            }
+        }
+
+        editmachineConstructorTime += ( new Date().getTime() - startTime );
+    } finally {
+        this.insideBuildTable = false;
+    }
+    return false;
+
+};
+
+
+
+Machine.prototype.constructHeaderRow = function Machine_constructHeaderRow()
+{
+    
+    var row = document.createElement("TR");
+    
+    row.id = this.name+"_headerrow";
+    row.className = "uir-machine-headerrow";
+    var cell = null;
+
+    
+    if (this.allowMoveLines)
+    {
+        cell = this.createColumnHeaderCell('&nbsp;', true);
+        cell.className += " uir-column-grippy";
+        row.appendChild( cell );
+    }
+
+    
+    if (this.showRowNumbers)
+    {
+        cell = this.createColumnHeaderCell(this.rowNumberLabel, !this.allowMoveLines);
+        cell.className += " uir-column-rowNumber";
+        row.appendChild( cell );
+    }
+
+    
+    var nHeaderLabelCount = 0;
+    var bFirst = (cell == null);
+    for (var i = 0; i < this.countFormElements(); i++)
+    {
+        if ( this.getFormElementLabel( i ).length > 0 && this.getFormElementFieldSet( i ).length == 0 )
+        {
+            cell = document.createElement("TD");
+            var fieldName = this.getFormElementName(i);
+            cell = this.getDisplayHeaderCell( i, cell, bFirst, fieldName);
+            row.appendChild( cell );
+            
+            nHeaderLabelCount++;
+            if (bFirst == true)
+                bFirst = false;
+        }
+    }
+
+    if (this.allowQuickDeleteLines)
+    {
+        cell = this.createColumnHeaderCell('&nbsp;');
+        cell.className += " uir-column-quickDelete";
+        row.appendChild( cell );
+    }
+    this.nHeaderLabelCount = nHeaderLabelCount;
+    return row;
+};
+
+
+Machine.prototype.getDisplayHeaderCell = function Machine_getDisplayHeaderCell( nIndex, cell, firstCol, fieldName )
+{
+    var curType = this.getFormElementType( nIndex );
+    var classname = "listheadertd";
+
+    if( this.allWhiteDisplayMode )
+        classname += "wht";
+    else
+        classname += (firstCol?"left":"");
+
+    classname += " listheadertextb";
+
+    var divClassname = "listheader";
+    if( this.allWhiteDisplayMode )
+        divClassname += "wht";
+
+    var onClick = "";
+    var sortImgSrc = "";
+    if(this.sortable)
+    {
+       onClick = this.name+"_machine.sort("+nIndex+"); NS.form.setChanged(true); return false;";
+       sortImgSrc = this.getSortImage( nIndex );
+    }
+    var requiredImgSrc = this.getRequiredImage( nIndex );
+    var label = this.getFormElementLabel( nIndex ).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+    cell.height = "100%";
+    cell.className = classname;
+    cell.onclick = new Function(onClick);
+    cell.align = this.getAlignmentForColumn(nIndex);
+    cell.setAttribute("data-column-type", curType);
+    cell.setAttribute("data-label", label.replace(/>/g,'&gt;'));
+    cell.setAttribute("data-nsps-label", label.replace(/>/g,'&gt;'));
+    cell.setAttribute("data-nsps-type", "columnheader");
+
+    var div = "<div class='" + divClassname + "'>";
+    div += label.replace(/\n/g,'<br>') + requiredImgSrc  + sortImgSrc;
+    div += "</div>";
+
+    cell.innerHTML = div;
+    return cell;
+};
+
+Machine.prototype.getSortImage = function Machine_getSortImage( nIndex )
+{
+    var className = 'listheadersort';
+    if(this.sortable)
+    {
+        if (nIndex == this.sortIndex)
+           className += this.sortDirUp ? "up" : "down";
+    }
+    return "<span id="+this.name+"dir"+nIndex+" class='" + className + "'></span>";
+};
+
+Machine.prototype.getRequiredImage = function Machine_getRequiredImage( nIndex )
+{
+    var fldIdx = (nIndex >= 0 && this.isElementPopupDisplayField(nIndex)) ? (nIndex + 1) : nIndex;
+    if (this.isElementRequired( fldIdx ))
+    {
+        var className = 'listheaderreq';
+        return "<span id="+this.name+"req"+nIndex+" class='"+className+"' title='Required Field'></span>";
+    }
+    return "";
+};
+
+
+Machine.prototype.getAlignmentForColumn = function Machine_getAlignmentForColumn(nIndex)
+{
+    var curType = this.getFormElementType(nIndex);
+    if (curType == "currency" || curType == "currency2" || curType == "rtext" ||
+        curType == "rate" || curType == "float" || curType == "pct")
+    {
+        return "right";
+    }
+    else
+        return "left";
+};
+
+
+
+Machine.prototype.getDisplayCellContent = function Machine_getDisplayCellContent( nIndex, data, lineNum)
+{
+    var displayCellContent = this.getDisplayCellContentOverride(nIndex, data, lineNum);
+    if (displayCellContent != null)
+    {
+        if (displayCellContent.length > 0 && displayCellContent.search(/[^ \t]/) >= 0)
+            return displayCellContent;
+        else
+            return '&nbsp;';
+    }
+    var curType = this.getFormElementType( nIndex );
+    var curName = this.getFormElementName( nIndex );
+    var curElement = this.getFormElement( nIndex );
+
+    if (data == null)
+        data = '';
+    else
+    {
+        if ( curType != "select" && curType != "slaveselect" )
+            data = (data + "").replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // Decode newlines that were encoded in NLMachine to BR for the display version of a machine
+    if( curType == 'address' || curType == 'textarea' )
+    {
+        // Truncate long, non-edit fields so they don't result in very tall machine rows.
+        // BMS: moved to this case because the other cases (fieldset specifically) are negatively impacted
+        if (data.length > 250)
+        {
+            var tooltipData = escapeHTMLAttr(data);
+            var moreString = '(more...)';
+            data = data.substring(0, 250);
+            data += "<span class='uir-field-truncated-value' data-ns-tooltip='" + tooltipData + "'>" + moreString + "</span>";
+        }
+        var addrList = data.split(String.fromCharCode(5));
+        data = addrList.join("<br>");
+    }
+    var innerContent = '';
+    if ( curType == "select" || curType == "slaveselect")
+    {
+        if ( isMultiSelect( curElement ) )
+        {
+            var slctText = getmultiselectlisttext( curElement , data, String.fromCharCode(5) );
+            slctText = slctText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            slctText = slctText.split(String.fromCharCode(5));
+            innerContent += slctText.join("<br />");
+
+        }
+        else
+        {
+            innerContent += getlisttext( curElement, data );
+            innerContent = innerContent.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+    }
+    else if (isNumericField(curElement) || isCurrencyField(curElement))
+    {
+        var value = data;
+        var pctSign = (curType == "rate" && data.indexOf('%') != -1);
+        if (curType == "currency")
+            value = format_currency( parseFloat( data ) );
+        else if (curType == "currency2" || curType == "rate")
+            value = format_rate( parseFloat( data ), false );
+        innerContent += NLNumberToString(value);
+        if (curType == "rate" && pctSign)
+            innerContent += "%";
+    }
+    else if (curType == "checkbox")
+        innerContent += data == "T" ? "Yes" : "";
+    else if (curType == "radio")
+        innerContent += getradiotext( curElement, data );
+    else if (curType == "namevaluelist")
+        innerContent += getnamevaluelisttext( data , "<br>" );
+    else if (curType == "fieldset")
+    {
+        var fsContent = getFieldSetDisplayText( this, curName, lineNum );
+        if( fsContent != null && fsContent.length > 0)
+            innerContent += "<img src='/images/reportbuilder/fieldsetup.gif' border=0><img src='/images/nav/stretch.gif' height=1 width=6 border=0>";
+        innerContent += fsContent;
+    }
+    else if (curType == "phone" && window.tapidevice != null && window.tapidevice.length > 0)
+        innerContent += "<a href='#' src='/images/forms/phone.gif' onclick='NLDial("+'"'+data+'"'+");event.cancelBubble=true;return false;'>"+data+"</a>";
+    else if (curType == "password")
+        innerContent = data.replace(/./g,'&bull;');
+    else if (curType == "color" && data.length>0)
+    {
+        innerContent = "<span class='uir-color-chip' style='background-color:" + data + "'></span>";
+    }
+    else if (curType == "summary")
+    {
+        innerContent = "&nbsp;";
+    }
+    else if ( data != null )
+        innerContent += data.replace(/\n/g,'<br>');
+
+    // Make sure that innerContent contains something other than whitespace.
+    // Returning a string that contains only whitespace will cause innerHtTML
+    // to be empty and won't get copied properly.
+    if (innerContent.length > 0 && innerContent.search(/[^ \t]/) >= 0)
+        return innerContent;
+    else
+        return '&nbsp;';
+};
+
+
+
+Machine.prototype.getActiveRowCellContentClassName = function Machine_getActiveRowCellContentClassName(fieldIndex, lineNum)
+{
+    var className = "listinlinefocusedrowcell";
+    var bEditable = this.isFieldEditable(fieldIndex, lineNum);
+
+    if(!bEditable || !this.isinline)
+        className += "noedit";
+    return className;
+};
+
+
+Machine.prototype.updateCellContent = function Machine_updateCellContent(cell, fieldIndex, indexOfEditor, data, lineNum)
+{
+    if (lineNum == this.getAdjustedSegmentIndex( this.getMachineIndex(), false ))
+    {
+        if (cell.firstChild && cell.firstChild.focusedrowcell)
+        {
+            var value = this.getDisplayCellContent(indexOfEditor, data, lineNum);
+            cell.firstChild.className = this.getActiveRowCellContentClassName(fieldIndex, lineNum);
+            cell.firstChild.innerHTML = value;
+        }
+        else
+            cell.innerHTML = this.getCellContentHTML(fieldIndex, indexOfEditor, data, lineNum);
+
+        cell.className = cell.className.replace(/ *uir-disabled/, '');
+        if(!this.isFieldEditable(fieldIndex, lineNum)){
+            cell.className += ' uir-disabled';
+        }
+    }
+};
+
+
+Machine.prototype.positionFieldsetDiv = function NLMachine_positionFieldsetDiv(innerDiv, cell, img)
+{
+    var leftOffset = 0;
+    var topOffset = img.offsetHeight;
+
+    if( (findPosX(img) + innerDiv.offsetWidth) > (getDocumentClientWidth()+document.body.scrollLeft) )
+    {
+        leftOffset = img.offsetWidth - innerDiv.offsetWidth;
+    }
+    if( (findPosY(img) + img.offsetHeight + innerDiv.offsetHeight) > (getDocumentClientHeight()+document.body.scrollTop) )
+    {
+        topOffset = -innerDiv.offsetHeight;
+        img.src = '/images/reportbuilder/fieldsetdown_above.gif';
+    }
+
+    innerDiv.style.left = leftOffset;
+    innerDiv.style.top = topOffset;
+};
+
+
+
+Machine.prototype.createGrippyCell = function Machine_createGrippyCell(classes)
+{
+    var cell = document.createElement("TD");
+    cell.style.width = NS.UI.Util.isRedwood ? "34px" : "5px";
+    cell.className = classes;
+    
+    if (NS.UI.Util.isRedwood) {
+        cell.style.backgroundImage = "url('/uiredwood/img/icon/drag.svg')";
+        cell.style.backgroundSize = "20px 20px";
+    } else {
+        cell.style.backgroundImage = "url('/images/nav/endcaps/grippy2.gif')";
+    }
+    cell.style.backgroundRepeat = "no-repeat";
+    cell.style.backgroundPosition = "center";
+    cell.innerHTML = "<div>&nbsp;</div>";
+    return cell;
+};
+
+Machine.prototype.createRowNumberCell = function Machine_createRowNumberCell(index, classes)
+{
+    var cell = document.createElement("TD");
+    cell.className = classes;
+    cell.className += " uir-rowNumber";
+    cell.align = "center";
+    cell.innerHTML = "<div> " + index + " </div>";
+    return cell;
+};
+
+Machine.prototype.createDeleteCell = function Machine_createDeleteCell(index, classes)
+{
+    var that = this;
+    var required = this.isRowRequired(index);
+    var cell = document.createElement("TD");
+    cell.className = classes;
+    var img = document.createElement( "IMG" );
+    img.classList.add('uir-quick-delete');
+    if (required) {
+        img.classList.add('uir-quick-delete-disabled');
+    }
+    img.border = 0;
+
+    if (NS.UI.Util.isRedwood) {
+        img.src = "/uiredwood/img/list/" + (required ? "trash-disabled.svg" : "trash.svg");
+    } else {
+        img.src = "/images/icons/controls/machine_x"+(required ? "_dis" : "")+".gif";
+    }
+
+    if (!required)
+    {
+        img.onclick = function () {
+            that.deleteline(index);
+            setMachineChanged(that.name);
+            return false;
+        };
+        cell.style.cursor = "hand";
+    }
+    cell.appendChild( img );
+    cell.style.width = "14px";
+    cell.valign = 'middle';
+    return cell;
+};
+
+
+Machine.prototype.createColumnHeaderCell = function Machine_createColumnHeaderCell(sLabel, first)
+{
+    cell = document.createElement("TD");
+    cell.className = "listheadertd";
+    if( this.allWhiteDisplayMode )
+        cell.className += "wht";
+    else if (first)
+        cell.className += "left";
+    cell.className += " listheadertextb";
+
+    var div = document.createElement("div");
+    div.className = "listheader";
+    if( this.allWhiteDisplayMode )
+        div.className += "wht";
+
+    div.innerHTML = sLabel;
+    cell.appendChild(div);
+
+    return cell;
+};
+
+
+Machine.prototype.transferInputFieldValuesToDisplayOnly = function Machine_transferInputFieldValuesToDisplayOnly()
+{
+    var rowNum = this.currentRowNum;
+    var table = this.tableobj;
+    var rows = table.getElementsByTagName("tr");
+
+    if((!this.allow_insert && this.getNumOfRows() == 0) || rowNum == 0)
+        return;
+
+    if ( (rows.length - (this.isCurrentlySegmented && (this.segmentStartIndex != this.lastStartSegmentIndex) ? 3 : 0) ) <= rowNum)
+        return;
+    var newRow = rows[rowNum];
+
+    var fieldnames = this.getFormFieldNames();
+    var elems = this.getInputElements(false, fieldnames);
+
+    
+    var column = -1 + (this.showRowNumbers ? 1 : 0) + (this.allowMoveLines ? 1 : 0);
+
+    var lastWasDisplay = false;
+
+    for (var i=0; i < elems.length; i++)
+    {
+        var field = null;
+        var label = null;
+
+        var fieldAndLabel = this.getFieldOverride(elems, newRow, rowNum, i);
+        if (fieldAndLabel)
+        {
+            field = fieldAndLabel == null ? null : fieldAndLabel[0];
+            label = fieldAndLabel == null ? null : fieldAndLabel[1];
+        }
+        else
+        {
+            field = elems[i];
+            label = (lastWasDisplay) ? this.getFormElementLabel(i-1) : this.getFormElementLabel(i);
+        }
+        if ((label == null) || (label.length == 0) || this.getFormElementFieldSet(i).length > 0)
+            continue;
+        if (!lastWasDisplay)
+            ++column;
+        lastWasDisplay = this.isElementPopupDisplayField(i);
+
+        var parent = jQuery(newRow).children("TD")[column];
+
+        
+        if((field) && this.isNeedUpdateFieldDisplayValue(field))
+        {
+            var sVal = this.getDisplayHTMLOfField( field.indexOfEditor );
+            this.updateCellContent(parent, i, field.indexOfEditor, sVal, rowNum);
+        }
+     }
+     this.adjustButtonPosition();
+};
+
+
+
+Machine.prototype.getDisplayHTMLOfField = function Machine_getDisplayHTMLOfField(i)
+{
+    var sReturn = "";
+    var curType = this.getFormElementType( i );
+    var curElement = this.getFormElement( i );
+
+    if ( curType == "select" || curType == "slaveselect" )
+    {
+        if( i > 0 && this.isElementPopupDisplayField(i-1))
+        {
+            
+            sReturn = (curElement.value.length == 0 ? '' : this.getFormElement(i-1).value);
+        }
+        else
+        {
+            sReturn = getFormValue(curElement);
+        }
+    }
+    else if ( curType == "checkbox" )
+    {
+        sReturn = getCheckboxState(curElement) ? "T" : "F";
+    }
+    else if ( curType == "radio" )
+    {
+        for (var j=0; j < curElement.length; j++)
+            if ( curElement[j].checked)
+                sReturn = curElement[j].value;
+    }
+    else if (curType == "integer" && i > 0 && this.isElementPopupDisplayField(i - 1))
+    {
+        sReturn = (curElement.value.length == 0 ? '' : this.getFormElement( i - 1).value);
+    }
+    else if ( curType == "address" || curType == "textarea")
+    {
+        if(curElement.value != null)
+        {
+            var lineList = curElement.value.split(/\r?\n/);
+            sReturn = lineList.join(String.fromCharCode(5));
+        }
+        else
+        {
+            curElement = curElement[0];
+            var lineList = curElement.value.split(/\r?\n/);
+            sReturn = lineList.join(String.fromCharCode(5));
+        }
+    }
+    else if (curType != "fieldset" )
+    {
+        sReturn = curElement.value;
+    }
+
+    return sReturn;
+};
+
+Machine.prototype.relayout = function Machine_relayout(bFocus)
+{
+    this.layoutdd.setText(null, bFocus==false? true : false, null);
+};
+
+Machine.prototype.adjustButtonPosition = function NLMachine_adjustButtonPosition()
+{
+    if (!this.isinline)
+        return;
+    
+};
+
+ Machine.prototype.updateButtons = function Machine_updateButtons()
+ {
+     var isCopyPrevious;
+     if (this.getMachineIndex() == this.getNextIndex())
+     {
+         setButtonText(this.name + "_addedit", "Add");
+         setButtonText(this.name + "_copy", "Copy Previous");
+         disableButton(this.name + "_copy", this.getNextIndex() == 1);
+         disableButton(this.name + "_remove", true);
+         disableButton(this.name + "_insert", true);
+         isCopyPrevious = true;
+     }
+     else
+     {
+         this.mode = "edit";
+         
+         setButtonText(this.name + "_addedit", "OK");
+         setButtonText(this.name + "_edit", "OK");
+         setButtonText(this.name + "_copy", "Make Copy");
+         disableButton(this.name + "_copy", this.isinserting);
+         disableButton(this.name + "_remove", this.isCurrentRowRequired() );
+         disableButton(this.name + "_insert", this.isinserting);
+         isCopyPrevious = false;
+     }
+     NS.event.dispatchImmediate(NS.event.type.ROW_UPDATE_BUTTONS, {isCopyPrevious: isCopyPrevious, machineName: this.name});
+ };
+
+
+function Mch_setUpEventHandlerInterception(mch, field, curType)
+{
+    
+    var fldOnChange;
+    if (isNumericField( field ) || isCurrencyField( field ))
+        fldOnChange = getNLNumericOrCurrencyDisplayField(field);
+    else
+        fldOnChange = (curType == "namevaluelist") ? field.form.elements[field.name+"_display"] : field;
+
+    fldOnChange.originalOnChange = fldOnChange.onchange ? fldOnChange.onchange : null;
+    fldOnChange.handleChange = MachineField_handleChange;
+    fldOnChange.machine = mch;
+    fldOnChange.onchange = function () {
+        return fldOnChange.handleChange();
+    };
+
+    var childNodes = field.childNodes;
+
+    if (childNodes != null)
+    {
+        for (var i=0; i < childNodes.length; i++)
+        {
+            
+            if (childNodes[i].nodeType == 1)
+                Mch_setUpEventHandlerInterception(mch, childNodes[i], curType);
+        }
+    }
+}
+
+
+function addDragDropHandlersToRow( machinename, row, selected )
+{
+    row.machineName = machinename;
+    if ( selected )
+    {
+        row.selectedRow = true;
+        row.firstChild.style.cursor = "move";
+    }
+    row.onmousedown = Machine_OnMouseDown;
+    row.onmousemove = OrderedListOnMouseMove;
+    row.onselectstart = OrderedListCancelDragDrop;
+}
+
+function cleanUpCellContents(cell)
+{
+    while (cell.firstChild != null)
+    {
+        cell.removeChild(cell.firstChild);
+    }
+}
+
+function NLMachine_doSetBackground(element, sBackgroundStyle)
+{
+    
+    if(element.getAttribute("sCurrentBackground") != sBackgroundStyle)
+    {
+        element.style.background = sBackgroundStyle;
+        element.setAttribute("sCurrentBackground",sBackgroundStyle);
+    }
+}
+
+
+function NLMachine_deferredSetBackgroundStyle(element, sBackgroundStyle)
+{
+    if(window.loadcomplete) 
+    {
+        NLMachine_doSetBackground(element, sBackgroundStyle);
+    }
+    else
+    {   
+        setTimeout(function(){NLMachine_doSetBackground(element, sBackgroundStyle);}, 1);
+    }
+}
+
+function setWidth(inpt, newWidth)
+{
+    inpt.style.width = newWidth;
+    if (inpt.className == "dropdownInput")
+    {
+        var dd = getDropdown(inpt);
+        dd.setText(dd.getText(), true , newWidth);
+    }
+}
+
+function tweakTable(tableName)
+{
+    
+    var table = document.getElementById(tableName);
+    table.style.tableLayout = "fixed";
+    table.style.tableLayout = "auto";
+}
+
+
+function Machine_hideField(field)
+{
+    field.style.display = "none";
+}
+
+function Machine_showField(field)
+{
+    field.style.display = NS.UI.Util.isRedwood ? "" : "block";
+}
+
+
+function NLMachine_updateTextAreaSize(field)
+{
+    var sContent = field.value + ".";
+    var pLines = sContent.split("\n");
+    var nLines = pLines.length;
+    var nRows  = nLines;
+
+    
+    for(var i=0; i < nLines; i++)
+    {
+        nRows += parseInt( ((pLines[i]).length / 25) );
+    }
+
+    
+    nRows++;
+
+    
+    if(nRows < 3)
+    {
+        nRows = 3;
+    }
+    else if(nRows > 20)
+    {
+        
+        nRows = 20;
+        field.style.overflow = "scroll";
+    }
+    else
+    {
+        
+        field.style.overflow = "hidden";
+    }
+
+    if(nRows > 0)
+    {
+        field.rows = nRows;
+    }
+}
+
+ function getButtonDiv(name)
+ {
+     return document.getElementById(name + "_buttons");
+ }
+
+ function hideButtons(name)
+ {
+     if (getButtonDiv(name))
+         getButtonDiv(name).style.display = "none";
+ }
+
+ function moveButtonDiv(name)
+ {
+     hideButtons(name);
+     var buttonDiv = getButtonDiv(name);
+     if (buttonDiv)
+     {
+         buttonDiv.parentNode.removeChild(buttonDiv);
+         document.body.appendChild(buttonDiv);
+     }
+ }
+
+
+ function focusDefaultButton(machine)
+ {
+     
+     if(!focusButton(machine.name + "_addedit"))
+     {
+         focusButton(machine.name + "_edit");
+     }
+ }
+
+ function focusButton(buttonId)
+ {
+     var button = document.getElementById(buttonId);
+     if (button != null && isFocusable(button))
+     {
+         button.focus();
+         return true;
+     }
+     return false;
+ }
+
+ function setButtonText(buttonId, txt)
+ {
+    NS.UI.Button.setLabel(buttonId, txt);
+ }
+
+ function disableButton(buttonId, value)
+ {
+     var button = document.getElementById(buttonId);
+     if (button != null && button.disabled != value)
+     {
+         if (button.nodeName === "INPUT" || button.nodeName === "BUTTON"){
+             button.disabled = value;
+         }
+         
+     }
+ }
+
+
+
+
+Machine.prototype.renderTable = function Machine_renderTable(startIndex, bNoFocus)
+{
+    if ( this.isinline && this.moveButtons)
+        moveButtonDiv(this.name);
+
+    
+    var rowArray = [];
+    var i, j;
+
+    
+    var row = this.constructHeaderRow();
+    rowArray.push(row);
+
+    
+    var maxline = parseInt( this.getNextIndex() );
+
+    var currentSegmentStartIndex = this.segmentable && this.isCurrentlySegmented ? this.segmentStartIndex : -1;
+    var segmentStartIndex = startIndex && this.segmentable ? parseInt(startIndex) : currentSegmentStartIndex;
+    this.updateSegmentation(segmentStartIndex, maxline - 1);
+    var firstRowIndex = this.isCurrentlySegmented ? this.segmentStartIndex : 1;
+    var lastRowIndex = this.isCurrentlySegmented ? Math.min(firstRowIndex + this.segmentSize, maxline) : maxline;
+
+    for (var linenum = firstRowIndex; linenum < lastRowIndex; linenum++)
+    {
+        row = this.constructMainTableRow(linenum);
+        rowArray.push(row);
+    }
+
+    
+    var cell = null;
+    var elemCount = this.countFormElements();
+    var that = this;
+
+    var bInLineEditingAwaitingInsert = this.isinline && this.allow_insert && (this.getMachineIndex() != this.getNextIndex() || (this.isCurrentlySegmented && this.getMachineIndex() != lastRowIndex));
+    if ((this.isinline && this.allow_insert) || maxline == 1)
+    {
+        row = document.createElement("TR");
+
+        if (!this.isinline || bInLineEditingAwaitingInsert)
+        {
+            row.onclick = function () {
+                if (NS.form.isInited()) {
+                    if (that.ischanged) {
+                        that.addline();
+                    } else {
+                        that.clearline(false, that.isCurrentlySegmented ? that.lastStartSegmentIndex : null);
+                    }
+                }
+            };
+        }
+
+        row.className = 'uir-machine-row uir-machine-row-' + (lastRowIndex % 2 === 0 ? 'even' : 'odd') + ' listtextnonedit';
+
+        if(bInLineEditingAwaitingInsert)
+        {
+            var colspan = (this.showRowNumbers ? 1 : 0) + (this.allowMoveLines ? 1 : 0) + (this.allowQuickDeleteLines ? 1 : 0);
+
+            
+            for (i = 0; i < elemCount; i++)
+            {
+                if (this.getFormElementLabel(i).length > 0 && this.getFormElementFieldSet(i).length == 0 )
+                {
+                    colspan++;
+                }
+            }
+
+            
+            cell = document.createElement("TD");
+            cell.colSpan = colspan;
+            cell.classList.add("uir-new-row");
+            cell.classList.add(this.allWhiteDisplayMode ? "listtexthlwht" : "listtexthl");
+            cell.style.color="#666666";
+            cell.style.cursor="default";
+            cell.style.height = "100%";
+            cell.innerHTML = this.newRowHTML();
+            row.appendChild( cell );
+        }
+        else
+        {
+            row.className += ' uir-machine-row-focused';
+
+            var iStartCol = (this.showRowNumbers ? 1 : 0) + (this.allowMoveLines ? 1 : 0);
+
+            
+            for(j = 0; j < iStartCol; j++)
+            {
+                cell = document.createElement("TD");
+                var className = "listinlinefocusedrow";
+                if (j==0)
+                    className +="left";
+                cell.className = className;
+                cell.style.height="100%";
+                cell.innerHTML = "<div style='height:100%;'></div> ";
+                row.appendChild( cell );
+            }
+
+            
+            var firstVisibleCol = true;
+            for (i = 0; i < elemCount; i++)
+            {
+                if (this.getFormElementLabel(i).length > 0 && this.getFormElementFieldSet(i).length == 0)
+                {
+                    
+                    cell = document.createElement("TD");
+                    cell.align = this.getAlignmentForColumn(i);
+
+                    
+                    if(this.isinline)
+                    {
+                        cell.className = "listinlinefocusedrow";
+                        if (firstVisibleCol && iStartCol == 0)
+                        {
+                            cell.className +="left";
+                        }
+
+                        cell.style.cursor = "hand";
+                        cell.style.height = "100%";
+                        var di = this.isElementPopupDisplayField(i) ? 1 : 0;
+                        var colnum = this.isElementDisplayOnlyWithField(i) ? null : (i+di);
+                        var jsClk = this.name + "_machine.viewline(" + maxline + "," + colnum +", true); return true;";
+                        cell.onclick = new Function(jsClk);
+                    }
+                    cell.innerHTML = "&nbsp;"; 
+                    
+                    cell.setAttribute("data-ns-tooltip", this.getFormElementLabel(i) || '');
+                    
+                    row.appendChild( cell );
+                    firstVisibleCol = false;
+                }
+            }
+
+            if(this.allowQuickDeleteLines)
+            {
+                cell = document.createElement("TD");
+                cell.className = "listinlinefocusedrow";
+                cell.style.height = "100%";
+                cell.innerHTML = "<div style='height:100%;'>&nbsp;</div> ";
+                row.appendChild( cell );
+            }
+
+            if(this.isinline && cell)
+            {
+                
+                cell.className += "right";
+            }
+
+        }
+        rowArray.push(row);
+    }
+
+    
+    row = document.createElement("TR");
+
+    if (this.allowMoveLines)
+    {
+        row.appendChild(this.createGrippyCell("smalltext listheadertdleft"));
+    }
+
+    if (this.showRowNumbers)
+    {
+        
+        cell = this.createColumnHeaderCell(this.rowNumberLabel);
+        row.appendChild( cell );
+    }
+
+    var countElems = this.countFormElements();
+    for ( i = 0; i < countElems; i++)
+    {
+        if ( this.getFormElementLabel( i ).length == 0 || this.getFormElementFieldSet( i ).length > 0 ) 
+            continue;
+        cell = document.createElement("TD");
+        cell.className = "listinlinefocusedrow";
+        cell.align = this.getAlignmentForColumn(i);
+        cell.style.paddingTop ="0px";
+        cell.style.paddingBottom ="0px";
+        cell.innerHTML = "<div></div>";
+        cell.style.borderWidth = "0 0 0 1";
+        row.appendChild( cell );
+    }
+
+    if (this.allowQuickDeleteLines)
+    {
+        row.appendChild(this.createDeleteCell("listheadertdright"));
+    }
+
+    
+    
+    for (i = 0; i < row.childNodes.length; i++)
+    {
+        if (row.childNodes[i].firstChild)
+        {
+            row.childNodes[i].firstChild.style.height = "3px";
+            row.childNodes[i].firstChild.style.overflowY = "hidden";
+        }
+    }
+
+    this.lastRow = row;
+    this.lastRow.className = 'uir-machine-row-last';
+    this.lastRow.style.height = "3px";
+    this.lastRow.style.visibility = "hidden";
+    rowArray.push(row);
+
+    // Update table rows
+	if (this.tableobj) {
+		var tbody = this.tableobj.tBodies[0];
+		var numRowsToRemove = tbody.children.length;
+
+		for (i = 0; i < rowArray.length; i++) {
+			tbody.appendChild(rowArray[i]);
+		}
+
+		while (numRowsToRemove > 0) {
+			tbody.removeChild(tbody.children[0]);
+			numRowsToRemove--;
+		}
+	}
+
+    if(this.allow_insert || this.getLineCount()>0)
+    {
+        if (this.showEditor)
+        {
+            this.editRow( this.getAdjustedSegmentIndex( this.getMachineIndex(), false), !bNoFocus );
+        }
+        else
+        {
+            this.setFocus(this.focusedColumn);
+        }
+    }
+};
+
+Machine.prototype.newRowHTML = function Machine_newRowHTML()
+{
+    return "[Click here for a new line]";
+};
+
+
+Machine.prototype.constructMainTableRow = function Machine_constructMainTableRow(index)
+{
+    var classcolor = this.allWhiteDisplayMode ? "listtexthlwht" : "listtext" + ((index % 2 == 1) ? "hl" : "");
+    var rowHasFocus = index == this.getMachineIndex();
+    if (rowHasFocus)
+    {
+        if (this.isinline)
+        {
+            classcolor = "listinlinefocusedrow";
+        }
+        else
+        {
+            classcolor += " listfocusedrow";
+        }
+    }
+
+    var row = document.createElement("TR");
+    
+    row.id = this.name+"_row_"+index;
+    row.className = 'uir-machine-row uir-machine-row-' + (index % 2 === 0 ? 'even' : 'odd');
+
+    
+    if (this.allowMoveLines)
+    {
+        row.appendChild(this.createGrippyCell("uir-grippy " + classcolor));
+        addDragDropHandlersToRow(this.name, row, rowHasFocus);
+    }
+
+    
+    if (this.showRowNumbers)
+    {
+        row.appendChild(this.createRowNumberCell(index, classcolor));
+    }
+
+    var i;
+    var linedata = this.getLineArrayLine(index - 1);
+    var countElems = this.countFormElements();
+    var fieldnames = this.getFormFieldNames();
+    var bFirstVisibleColumn = true;
+
+    for (i = 0; i < countElems; i++)
+    {
+        if ( this.getFormElementLabel(i).length == 0 || this.getFormElementFieldSet(i).length > 0 )   
+        {
+            continue;
+        }
+        row.appendChild(this.createFieldCell(index, linedata, fieldnames, i, classcolor, bFirstVisibleColumn));
+        bFirstVisibleColumn = false;
+    }
+
+    if (this.allowQuickDeleteLines)
+    {
+        row.appendChild(this.createDeleteCell(index, classcolor));
+    }
+
+    if (rowHasFocus)
+    {
+        row.className += " uir-machine-row-focused listfocusedrow";
+        row.firstChild.className += "left";
+        row.lastChild.className += "right";
+    }
+
+    return row;
+};
+
+Machine.prototype.createFieldCell = function Machine_createFieldCell(rowIndex, linedata, fieldnames, columnIndex, classes, firstVisible)
+{
+    var cell = document.createElement("TD");
+    cell.className = classes;
+    cell.align = this.getAlignmentForColumn(columnIndex);
+    cell.noWrap = cell.align == "right";
+    if (this.indentFirstVisibleColumn && firstVisible)
+    {
+        var indentColumnIndex = columnIndex + 1;
+        if (fieldnames[columnIndex].indexOf('_display') != -1)
+            indentColumnIndex++;
+        var indentLevel = (linedata[indentColumnIndex]) ? linedata[indentColumnIndex] : 0;
+
+        // 15px - global left padding for all machine cells
+        cell.style.setProperty("padding-left", 15 + 20 * parseFloat(indentLevel) + 'px', "important");
+    }
+    cell.innerHTML = this.getCellContentHTML(columnIndex, columnIndex, linedata ? linedata[columnIndex] : null, rowIndex);
+    cell.style.cursor = "hand";
+    cell.style.height = "100%";
+    this.customizeCell(cell, columnIndex, columnIndex, linedata ? linedata[columnIndex] : null, rowIndex);
+    var di = this.isElementPopupDisplayField(columnIndex) ? 1 : 0;
+    var colnum = this.isElementDisplayOnlyWithField(columnIndex) ? null : (columnIndex + di);
+    var that = this;
+    
+    cell.setAttribute("data-ns-tooltip", this.getFormElementLabel(columnIndex) || '');
+    
+    cell.onclick = function () {
+        that.viewline(rowIndex, colnum, false);
+        return true;
+    };
+    return cell;
+};
+
+
+
+Machine.prototype.getCellContentHTML = function Machine_getCellContentHTML( fieldIndex, indexOfEditor, data, lineNum)
+{
+    
+    
+    
+    var currLineNum = (this.getSegmentAdjustedRowNum() < this.segmentStartIndex) ? lineNum : this.getSegmentAdjustedRowNum();
+    var value = this.getDisplayCellContent( indexOfEditor, data, currLineNum);
+
+    if (lineNum == this.getAdjustedSegmentIndex( this.getMachineIndex(), false ))
+    {
+        var className = this.getActiveRowCellContentClassName(fieldIndex, currLineNum);
+        value = "<div class='" + className + "' style='-moz-box-sizing: border-box;' focusedrowcell=1>" + value + "</div>";
+    }
+    return value;
+};
+
+
+
+Machine.prototype.customizeCell = function Machine_customizeCell( cell, fieldIndex, indexOfEditor, data, lineNum)
+{
+    
+    
+    
+    var currLineNum = (this.getSegmentAdjustedRowNum() < this.segmentStartIndex) ? lineNum : this.getSegmentAdjustedRowNum();
+    this.customizeDisplayCell( cell, indexOfEditor, data, currLineNum);
+};
+
+
+Machine.prototype.editRow = function Machine_editRow(rowNum, bFocusLine)
+{
+    if (!this.isinline)
+        return;
+
+    if((!this.allow_insert && this.getNumOfRows()==0) || rowNum == 0)
+        return;
+
+    var table = this.tableobj;
+    var rows = table.getElementsByTagName("tr");
+    
+    if ((rows.length-1) <= rowNum ) {
+        this.currentRowNum = rowNum;
+        return;
+    }
+    var newRow = rows[rowNum];
+    var elems = this.getInputElements();
+    // Copy the contents of the row about to be edited to the last row
+    // this is so that any slaving code that temporarily changes the contents
+    // of a column don't cause the table to change size
+    if(this.currentRowNum != rowNum)
+    {
+        
+        var lastCells = this.lastRow.cells;
+        var newCells  = newRow.cells;
+        for(var iter = 0; iter < lastCells.length; iter++)
+        {
+            var bc = lastCells[iter];
+            if (this.allow_insert && this.getMachineIndex() == this.getNextIndex()) 
+                bc.innerHTML = "<div>&nbsp;</div>";
+            else
+                bc.innerHTML = newCells[iter].innerHTML;
+            // reduce the height of the hidden row;
+            if (bc.firstChild && bc.firstChild.style)
+            {
+               bc.firstChild.style.height="3px";
+               bc.firstChild.style.overflowY="hidden";
+            }
+        }
+    }
+
+    this.currentRowNum = rowNum;
+
+    Machine_scheduleTransfer(this);
+    this.addEditor(elems, newRow, rowNum, bFocusLine);
+
+    table.machineName = this.name;
+    putButtonsInMachine(this, newRow, table);
+    this.updateButtons();
+
+    
+    if(bFocusLine && elementIsFocusable(this.tableobj) )
+        this.setFocus(this.focusedColumn);
+
+    this.postEditRow();
+};
+
+
+
+Machine.prototype.addEditor = function Machine_addEditor(elems, newRow, rowNum, bFocus)
+{
+    newRow.onclick = null;
+
+    var lastWasDisplay = false;
+    var column = -1 + (this.showRowNumbers ? 1 : 0) + (this.allowMoveLines ? 1 : 0);
+
+    if(!this.focusedColumn || !this.isFieldEditable(this.focusedColumn, this.getSegmentAdjustedRowNum()))
+    {
+        this.setColToFirstEditable();
+    }
+
+    for (var i=0; i < elems.length; i++)
+    {
+        var field = null;
+        var label = null;
+
+        var fieldAndLabel = this.getFieldOverride(elems, newRow, rowNum, i);
+        if (fieldAndLabel)
+        {
+            field = fieldAndLabel == null ? null : fieldAndLabel[0];
+            label = fieldAndLabel == null ? null : fieldAndLabel[1];
+        }
+        else
+        {
+            field = elems[i];
+            label = (lastWasDisplay) ? this.getFormElementLabel(i-1) : this.getFormElementLabel(i);
+        }
+        if ((label == null) || (label.length == 0) || this.getFormElementFieldSet(i).length > 0)
+            continue;
+        if (!lastWasDisplay)
+            ++column;
+        lastWasDisplay = this.isElementPopupDisplayField(i);
+
+        var theCell = newRow.cells[column];
+        theCell.height= ACTIVE_LINE_HEIGHT + "px";
+
+        if (field == null)
+            continue;
+
+        if (i == this.focusedColumn && !this.isElementDisplayOnlyWithField(i))
+        {
+            var st = theCell.style;
+            Machine_showField(field);
+
+            
+            theCell.origPaddingTop = st.paddingTop;
+            theCell.origPaddingRight = st.paddingRight;
+            theCell.origPaddingLeft = st.paddingLeft;
+            theCell.origPaddingBottom = st.paddingBottom;
+
+            NS.jQuery(theCell).addClass('uir-machine-focused-cell').siblings().removeClass('uir-machine-focused-cell');
+
+            
+            storeCheckboxState(field);
+
+            var parent = field.parentNode;
+            parent.removeChild(field);
+            this.setCellContents(theCell, field, column, this.getRowFormElementType(i, rowNum), i, bFocus);
+
+            restoreCheckboxState(field);
+
+            this.focusedCell = field;
+        }
+    }
+
+};
+
+
+Machine.prototype.setCellContents = function NLMachine_setCellContents(cell, contents, i, curType, elIndex, bFocus)
+{
+    var reskin = NS.UI && NS.UI.Refresh, field, width, that = this;
+    var contentFirstChild = (contents.firstElementChild||contents.firstChild);
+
+    var bDoRelayout = true;
+
+    this.copiedlastrowcell = i;
+
+    cell.innerHTML = "";
+
+    var spc     = this.cellContainerDIV;
+    var spHover = this.cellHoverDIV;
+
+    if(!spc)
+    {
+        spc = document.createElement("div");
+        spc.className      = "bigouter";
+        spc.style.margin   = "0";
+        spc.style.padding  = "0";
+        spc.style.position = "relative";
+        spc.style.minHeight   = "100%";
+        if (!reskin) {
+            spc.style.minWidth    = "100%";
+        }
+        spc.style.zIndex   = 1000;
+        spc.style.overflow = "visible";
+
+        spHover = document.createElement("div");
+        spHover.className = 'uir-field uir-machine-field divhover';
+        spHover.style.minWidth    = "100%";
+        spHover.style.minHeight = "100%";
+        spHover.style.left     = 0;
+        spHover.style.top      = 0;
+        spHover.style.margin   = 0;
+        spHover.sourceMachine = this;
+
+        this.cellContainerDIV = spc;
+        this.cellHoverDIV = spHover;
+    }
+    spc.appendChild(spHover);
+    cell.appendChild(spc);
+    if (contents.className && contents.className.indexOf("listcontrol")>=0)
+        spc.style.border = "0";
+    else
+        spc.style.border = "2px solid #888888";
+    spc.style.minWidth = "100%";
+
+    spHover.style.textAlgin = "";
+    spHover.innerHTML = "";
+    spHover.style.padding  = "0";
+    spHover.setAttribute('data-field-type', contents.getAttribute('data-fieldtype'));
+    if (!reskin) {
+        spHover.style.position = "absolute";
+    }
+
+    if( curType!="fieldset" )
+        spHover.appendChild(contents);
+    if( this.nHeaderLabelCount == 1)
+    {    
+        spHover.style.position = "relative";
+        bDoRelayout = false;
+    }
+
+    if (!contents.helperButtonWidth)
+    {
+        var helperButtonWidth = 0;
+        elems = contents.getElementsByTagName("SPAN");
+        for ( var i = 0; i < elems.length; i++ )
+        {
+            if (elems[i].className.indexOf("field_widget_")>=0)
+            {
+                helperButtonWidth = elems[i].offsetWidth;
+                if (!(curType == "select" || curType == "slaveselect"))
+                    elems[i].style.left = "0";
+                break;
+            }
+        }
+        contents.helperButtonWidth = helperButtonWidth;
+    }
+
+    if (curType == "integer" && elIndex > 0 && this.isElementPopupDisplayField(elIndex-1))
+    {
+        if(getDropdown(contents))
+        {
+            curType = "select";
+        }
+        else
+        {
+            field = contents.getElementsByTagName("TEXTAREA").length > 0 ? contents.getElementsByTagName("TEXTAREA")[0] : contents.getElementsByTagName("SELECT")[0];
+            if (this.isPopupMultiSelect(contents))
+                curType = "popupmultiselect";
+
+            if( contentFirstChild.style)
+            {
+                contentFirstChild.style.position = "relative";
+                contentFirstChild.style.width = "100%";
+            }
+            else
+            { 
+                contents.style.width= "100%";
+            }
+
+        }
+    }
+    if(curType == "textarea")
+    {
+        field = contents.tagName == 'TEXTAREA' ? contents : contentFirstChild;
+        NLMachine_updateTextAreaSize(field);
+    }
+    else if((curType == "select") || (curType == "slaveselect"))
+    {
+        if(curType == "slaveselect" && elIndex > 0 && this.isElementPopupDisplayField(elIndex-1))
+        {
+            
+            if(contents.tagName != 'SELECT' && contentFirstChild.style)
+            {
+                
+                contentFirstChild.style.position = "relative";
+                contentFirstChild.style.width = "100%";
+            }
+        }
+
+        var dd = getDropdown(contents);
+        if( dd )
+        {
+            this.layoutdd = dd;
+            this.layoutparent = cell;
+            this.showinparent = spc;
+            //spc.style.borderColor = "#FFFFFF";
+            dd.setText(null, true, null);
+            dd.inpt.style.verticalAlign='top';
+        }
+    }
+    else if(curType == "namevaluelist")
+    {
+        contentFirstChild.style.width = "100%";
+    }
+    else if(curType == "color")
+    {
+        
+    }
+    else if(curType == "checkbox")
+    {
+        if (!NS.UI.Util.isRedwood) {
+            contents.style.display = "inline-block";
+            contents.style.top = "1px"; 
+            contents.style.left = "1px"; 
+            contents.style.textAlign = "center";
+
+            
+        }
+    }
+    else if (curType == "summary")
+    {
+    
+    }
+    else
+    {
+        contents.style.width   = "100%";
+        if (contents.tagName == "INPUT")
+        {
+            contents.style.width = "100%";
+        }
+        else
+        {
+            contentFirstChild.style.width = "100%";
+        }
+    }
+
+    if(curType == "popupmultiselect")
+    {
+        
+        if (contents.helperButtonWidth != 0)
+            contents.style.width = "auto";
+        
+    }
+    else if (curType != "checkbox" && curType != "summary" && contentFirstChild && contentFirstChild.style && contents.helperButtonWidth != 0)
+    {
+        if (reskin && curType === 'namevaluelist') {
+            // do nothing
+        } else {
+            width = cell.clientWidth - contents.helperButtonWidth - 6;
+            contentFirstChild.style.width = (width >= 30 ? width : 30) + "px";
+        }
+    }
+    else if (this.isPopupSelect(contents))
+    {
+        if (reskin)
+        {
+            contentFirstChild.style.width = 'auto';
+        }
+        else
+        {
+            width = cell.clientWidth - 15;
+            contentFirstChild.style.width = (width >= 50 ? width : 50) + "px";
+        }
+
+        contents.lastChild.style.top = "3px"; 
+        var elems = contents.getElementsByTagName("SPAN");
+        for ( var i = 0; i < elems.length; i++ )
+        {
+            if (elems[i].className.indexOf("fwpopupsel_pos")>=0)
+            {
+                
+                
+                    elems[i].style.top = "1px";
+                
+                break;
+            }
+        }
+    }
+
+    
+    if(bDoRelayout && (curType == "select" || curType == "slaveselect"))
+    {
+        if( this.layoutdd )
+        {
+            if (contents.helperButtonWidth)
+            {
+                width = cell.offsetWidth - contents.helperButtonWidth - 10;
+                this.layoutdd.inpt.style.width = (width >= 30 ? width : 30) + "px";
+            }
+            else
+                this.layoutdd.inpt.style.width = "100%";
+
+            var focusAfterRelayout = (window.loadcomplete == true && document.page_is_resetting != true && bFocus != false);
+            setTimeout(function () {
+                that.relayout(focusAfterRelayout);
+            }, 100);
+        }
+    }
+
+    
+    if( curType=="fieldset" )
+    {
+        spc.style.border = "0";
+
+        var div = document.createElement("DIV");
+        div.id = "fieldset_options_div";
+        div.className = "fieldset uir-field-set-popup";
+        window.fieldSetDiv = div;
+
+        if (!NS.UI.Util.isRedwood) {
+            div.style.borderStyle = "solid";
+            div.style.borderWidth = "1px";
+            div.style.borderColor = "#999999";
+            div.style.backgroundColor = "#EFEFEF";
+        }
+
+        var innerDiv = document.createElement( "DIV" );
+        innerDiv.className = "uir-field-set-popup-body";
+        div.appendChild( innerDiv );
+
+        if (!NS.UI.Util.isRedwood) {
+            innerDiv.style.padding = "5px";
+            innerDiv.style.borderStyle = "solid";
+            innerDiv.style.borderWidth = "1px";
+            innerDiv.style.borderColor = "#FFFFFF #CCCCCC #CCCCCC #FFFFFF";
+        }
+
+        var buttonDiv = document.createElement("DIV");
+        buttonDiv.className = "uir-field-set-popup-buttons";
+
+        var button = document.createElement("INPUT");
+        button.type = "button";
+        button.name = "done";
+        button.id = this.name + "_fldsetbutton_done";
+        button.value = "Done";
+        button.className = "nlbuttontiny uir-button";
+        button.setAttribute('data-button-type', 'primary');
+        button.setAttribute('data-with-label', 'true');
+        button.onclick = new Function('evnt', this.getFieldSetDoneAction());
+        buttonDiv.appendChild(button);
+
+        innerDiv.appendChild(contents);
+        innerDiv.appendChild(buttonDiv);
+
+        if(this.getFieldSetIncludesCancelButton())
+        {
+            var buttonCancel = document.createElement("INPUT");
+            buttonCancel.type = "button";
+            buttonCancel.name = "cancel";
+            buttonCancel.id = this.name + "_fldsetbutton_cancel";
+            buttonCancel.value = "Cancel";
+            buttonCancel.className = "nlbuttontiny uir-button";
+            buttonCancel.setAttribute('data-button-type', 'default');
+            buttonCancel.setAttribute('data-with-label', 'true');
+            buttonCancel.onclick = function (evnt) {
+                that.clearline(true);
+                setEventCancelBubble(evnt);
+                return false;
+            };
+            buttonDiv.appendChild(buttonCancel);
+        }
+
+        var img = document.createElement( "IMG" );
+        if (NS.UI.Util.isRedwood) {
+            img.className = 'uir-vsoe-icon uir-vsoe-icon-opened';
+            img.src = '/uiredwood/img/icon/edit.svg';
+        } else {
+            img.border=0;
+            img.src = '/images/reportbuilder/fieldsetdown.gif';
+            img.height = '16';
+            img.width = '17';
+            img.style.position = "relative";
+            img.style.zIndex = 100;
+            img.style.top = "1px";
+        }
+
+        spHover.appendChild( img );
+        spHover.appendChild( div );
+
+        this.positionFieldsetDiv(div, cell, img);
+    }
+    cell.origClassName = cell.className;
+};
+
+function putButtonsInMachine(machine, newRow, table)
+{
+    if(newRow.hasButton || !machine.moveButtons)
+    {
+        return;
+    }
+
+    var name = machine.name;
+
+    var buttonDiv = getButtonDiv(name);
+    buttonDiv.parentNode.removeChild(buttonDiv);
+    buttonDiv.style.padding = "0 2px";
+
+    var newIndex = 1 +  newRow.rowIndex ;
+
+    var buttonRow = table.insertRow(newIndex);
+    buttonRow.className = 'uir-machine-button-row';
+
+    if ( machine.allowMoveLines )
+        buttonRow.onselectstart = OrderedListCancelDragDrop;
+
+    var rows = table.getElementsByTagName("tr");
+    var buttonCell = buttonRow.insertCell(0);
+    buttonCell.colSpan = Math.max(rows[0].cells.length, 1);
+    buttonCell.className = 'machineButtonRow';
+
+    
+    showButtonsInMachine(machine.showButtons, buttonCell, buttonDiv);
+
+    newRow.hasButton = true;
+}
+
+function showButtonsInMachine (show, buttonCell, buttonDiv)
+{
+    buttonDiv.style.visibility = "hidden";
+    if (this.buttonRowAnimation)
+        this.buttonRowAnimation.stop();
+
+    if (!show)
+    {
+        buttonDiv.style.display = "none";
+        buttonCell.appendChild(buttonDiv);
+        return;
+    }
+
+    buttonDiv.style.height = "1px";     
+    buttonDiv.style.overflow = "hidden";
+    buttonDiv.style.display = "";
+    buttonDiv.style.visibility = "";
+    buttonCell.appendChild(buttonDiv);
+    setTimeout(function(){doShowButtonsInMachine(show, buttonCell, buttonDiv)}, 0);
+}
+
+function doShowButtonsInMachine (show, buttonCell, buttonDiv)
+{
+
+    var height = getRuntimeStyle(buttonDiv.children[0], "height");
+    this.buttonRowAnimation = nlGetHeightAnimation (buttonDiv, 1, height, 150, onFinishshowButtonsInMachine);
+    this.buttonRowAnimation.start();
+}
+
+function onFinishshowButtonsInMachine (evnt, elem, animation)
+{
+    if (elem)
+        elem.style.overflow = "";
+}
+
+Machine.prototype.suspendEdit = function Machine_suspendEdit()
+{
+    if (!this.isinline)
+        return;
+
+    // remove focus from edit field
+    if(NS.jQuery.contains(this.tableobj, document.activeElement))
+    {
+        document.activeElement.blur();
+    }
+
+    var elems = this.getInputElements(true);
+    for (var i=0; i < elems.length; i++)
+    {
+        var field = elems[i];
+        if (field == null || (this.getFormElementFieldSet(i) && this.getFormElementFieldSet(i).length > 0))
+            continue;
+
+        Machine_reparent(field, this.miniform);
+    }
+    hideButtons(this.name);
+    return elems;
+};
+
+
+
+function Machine_reparent(child, newparent)
+{
+    
+    Machine_hideField(child);
+    
+
+    var parent = child.parentNode;
+
+    storeCheckboxState(child);
+
+    parent.removeChild(child);
+    newparent.appendChild(child);
+
+    restoreCheckboxState(child);
+
+    
+}
+
+
+
+function storeCheckboxState(field)
+{
+    if (field.type == "checkbox" && field.checked != null)
+    {
+        field.doubleCheck = field.checked;
+    }
+    var childNodes = field.childNodes;
+    if (childNodes == null)
+        return;
+    for (var i=0; i < childNodes.length; i++)
+        storeCheckboxState(childNodes[i]);
+}
+
+function restoreCheckboxState(field)
+{
+    if (field.type == "checkbox" && field.doubleCheck != null)
+    {
+        setNLCheckboxValue(field,field.doubleCheck);
+        field.doubleCheck = null;
+    }
+    var childNodes = field.childNodes;
+    if (childNodes == null)
+        return;
+    for (var i=0; i < childNodes.length; i++)
+        restoreCheckboxState(childNodes[i]);
+}
+
+
+
+
+
+
+
+
+
+
+
+var s_machineKeyDown = NLMachine_EditFieldOnKeyDown;
+var s_docKeyDown     = document.onkeydown;
+
+var mchMachineWithFocus = null;
+
+if (s_docKeyDown == null)
+{
+    document.onkeydown = s_machineKeyDown;
+}
+else
+{
+    document.onkeydown = function(evnt){ s_machineKeyDown(evnt); s_docKeyDown(evnt);};
+}
+
+
+var ACTIVE_LINE_HEIGHT = 26;
+
+
+function NLMachine_safeSetFocus(fld)
+{
+    setFieldFocus(fld);
+    
+
+}
+
+function NLMachine_EditFieldOnKeyDown(evnt)
+{
+    var kc = getEventKeypress(evnt);
+    
+    if(kc == 9 )
+    {
+        
+        if (window.popupDIV || (popupAutoSuggest && popupAutoSuggest.visible))
+            return;
+
+        var parDIV = Machine_getCellContainer(getEventTarget(evnt));
+        
+        if(mchMachineWithFocus || (parDIV && parDIV.className.indexOf('divhover') != - 1))
+        {
+            var mch = mchMachineWithFocus;
+            if(!mch)
+            {
+                mch = parDIV.sourceMachine;
+                mchMachineWithFocus = mch;
+            }
+
+            var delta = (getEventShiftKey(evnt)) ? -1 : 1;
+
+            
+            if( mch.isinline && mch.gotoField(delta) )
+            {
+                setEventPreventDefault(evnt);
+                setEventCancelBubble(evnt);
+                return false;
+            }
+            else
+            {
+                
+                mchMachineWithFocus = null;
+                return true;
+            }
+        }
+    }
+}
+
+
+function NLMachine_onMouseUp(evnt)
+{
+    var parDIV = Machine_getParentTABLE(getEventTarget(evnt));
+    if(parDIV && parDIV.machine)
+    {
+        mchMachineWithFocus = parDIV.machine;
+    }
+    else
+    {
+        mchMachineWithFocus = null;
+    }
+}
+
+function NLMachine_clearFocus()
+{
+	mchMachineWithFocus = null;
+}
+
+
+function Machine_OnMouseDown (evnt)
+{
+    var target = getEventTarget(evnt);
+    if ( target.nodeName == 'IMG' ) 
+        return;
+    OrderedListOnMouseDown(evnt);
+}
+
+
+function handleTab(evnt, func)
+{
+    
+    if (getEventKeypress(evnt) == 9 && !getEventShiftKey(evnt)) 
+        setTimeout(func,1);  
+}
+
+
+
+Machine.prototype.enterKeyHandleField = function Machine_enterKeyHandleField()
+{
+    this.enterKeyPressed = true;
+    var fldFocus;
+    var fldFocusIsSelect = false;
+    var moveToNextLine = true;
+
+    window.lastKeyStroke = 13;
+
+    if (this.isinline)
+    {
+        if(fldFocus = this.isFieldEditable(this.focusedColumn))
+        {
+            fldFocusIsSelect = isSelect(fldFocus);
+            if(isPopupSelect(fldFocus) || isPopupMultiSelect(fldFocus))
+                fldFocus = NLPopupSelect_getDisplayFieldByValueInput(fldFocus);
+
+            fldFocus.validationLimit = 1;
+            if(!fldFocusIsSelect && fldFocus.onchange)
+                fldFocus.onchange();
+
+            // Issue 233790 - validation alert in IE fires an additional blur event which results in another validation alert
+            setTimeout(function() {
+                delete fldFocus.validationLimit;
+            });
+
+            moveToNextLine = fldFocusIsSelect || fldFocus.isvalid;
+        }
+    }
+    else
+    {
+        fldFocus = document.activeElement;
+        if(fldFocus) {
+            fldFocusIsSelect = getDropdown(fldFocus);
+            if(!fldFocusIsSelect && fldFocus.onchange) {
+                fldFocus.onchange();
+            }
+
+            moveToNextLine = fldFocusIsSelect || fldFocus.isvalid != false;
+        }
+    }
+
+    if (window.lastKeyStroke == -1) 
+    {
+        moveToNextLine = false;
+        this.enterKeyPressed = false;
+    }
+    else
+        window.lastKeyStroke = -1;
+    return moveToNextLine;
+};
+
+Machine.prototype.doAddEdit = function Machine_doAddEdit(gonext)
+{
+    //  focus one of the default buttons in the item machine so that any field-level validations is triggered before the add line
+    focusDefaultButton(this);
+    if (!NS.form.isValid())
+        return false;
+
+    var delay = 0, that = this;
+    if (this.enterKeyPressed) delay = 200;
+
+    if ((delay == 0 ) || (typeof this.name == 'undefined')){
+          if (this.addline(gonext))
+          {
+              setWindowChanged(window, true);
+              return true;
+          }
+          return false;
+    } else {
+        setTimeout(function () {
+            if (that.addline(gonext)) {
+                setWindowChanged(window, true);
+            }
+        }, delay);
+        this.enterKeyPressed = false;
+    }
+};
+
+
+Machine.prototype.copyline = function Machine_copyline()
+{
+    if (!NS.form.isInited()) {
+        return false;
+    }
+    var that = this;
+    var linenum = parseInt(this.getMachineIndex());
+    if (linenum == this.getNextIndex()) {
+        linenum -= 1;
+        loadNewLine();
+    } else {
+        if (this.ischanged) {
+            this.addline();
+        }
+        if (NS.form.isInited()) {
+            createAndLoadNewLine();
+        } else {
+            NS.event.once(NS.event.type.FORM_INITED, function () {
+                createAndLoadNewLine();
+            });
+        }
+
+    }
+    if (typeof requiredDeposit != 'undefined')
+        requiredDeposit.lineCopy();
+
+    return true;
+
+    function createAndLoadNewLine() {
+        that.clearline(false, that.isCurrentlySegmented ? that.lastStartSegmentIndex : null);
+        loadNewLine();
+    }
+
+    function loadNewLine() {
+        that.loadline(linenum, true);
+
+        for (var i = 0; i < that.countFormElements(); i++) {
+            if (that.getFormElementType(i) == 'slaveselect') {
+                eval(getSyncFunctionName(that.getFormElementName(i), that.name) + '(true, ' + (linenum - 1).toString() + ', true);');
+            }
+        }
+
+        that.synclinefields(linenum);
+
+        if (that.isRecordManagerUsed()) {
+            that.dataManager.setInitialFieldValues(that.getLineData(), that.dataManager.activeRowIdx);
+        }
+
+        
+        that.buildtable();
+        that.ischanged = true;
+        that.isinserting = false;
+    }
+};
+
+
+Machine.prototype.insertline = function Machine_insertline()
+{
+    if (!NS.form.isInited()) return false;
+
+    var linenum = parseInt( this.getMachineIndex() ) - 1;
+
+    if (this.ischanged) {
+        var slavingOrig = getSlavingAsync();
+        try {
+            setSlavingAsync(false);
+            this.addline();
+        }
+        finally
+        {
+            setSlavingAsync(slavingOrig);
+        }
+    }
+
+    if (!this.nlapivalidateinsert())
+       return false;
+
+    if(hasV2RecordOwnerEventHandler())
+    {
+        if (!handleValidationResult(callRecordScript({'eventName':'validateInsert','fieldId':'null','sublistId':this.name,'arguments': arguments,'legacyScript': this.validateinsert()})))
+            return false;
+    }
+    else if (!handleValidationResult(this.validateinsert()))
+        return false;
+
+    if (linenum + 1 == this.getNextIndex())
+        return false;
+
+    this.insertLine(null, linenum + 1);
+    this.incrementIndex();
+    this.recalcType = "insert";
+    this.recalc();
+    var oldidx = linenum+1;
+    this.clearline(false);
+    this.setMachineIndex( oldidx );
+    
+    this.isinserting = true;
+    this.ischanged = true;
+
+    this.getsyncline(linenum);
+
+    
+    this.buildtable();
+    return true;
+};
+
+
+Machine.prototype.deleteline = function Machine_deleteline(linenum, unfocusline)
+{
+    if (!NS.form.isInited())
+        return false;
+
+    if (!this.nlapivalidatedelete())
+       return false;
+
+    if(hasV2RecordOwnerEventHandler())
+    {
+        if (!handleValidationResult(callRecordScript({'eventName':'validateDelete','fieldId':'null','sublistId':this.name,'arguments': arguments,'legacyScript': this.validatedelete()})))
+            return false;
+    }
+    else if (!handleValidationResult(this.validatedelete()))
+        return false;
+
+    if (!linenum)
+        linenum = parseInt( this.getMachineIndex() );
+    linenum -= 1;
+    if ( linenum+1 == this.getNextIndex() )
+        return false;
+
+    this.isdeleting = true;
+
+    
+    var origLineData = this.getOrigLineArrayLine(linenum);
+
+    this.dataManager.removeLine(linenum+1);
+    this.decrementIndex( );
+
+    this.recalcType = "remove";
+    this.recalc();
+    this.isinserting = false;
+    if (linenum < parseInt(this.getNextIndex())-1)
+    {
+        this.ischanged=false;
+        if(!unfocusline)
+            this.viewline(linenum+1)
+    }
+    else
+    {   
+        this.clearline(false, this.isCurrentlySegmented ? (this.lastStartSegmentIndex == this.segmentStartIndex && this.getNextIndex()-1 < this.lastStartSegmentIndex + min_segment_size ? Math.max(1, this.lastStartSegmentIndex - this.segmentSize) : this.lastStartSegmentIndex ) : null);
+        this.getsyncline( 0 );
+    }
+
+    this.isdeleting = false;
+    this.postdeleteline(linenum + 1, origLineData);
+    this.waschanged = true;
+    return true;
+};
+
+
+
+
+Machine.prototype.moveline = function Machine_moveline(dir)
+{
+    if (!NS.form.isInited()) return false;
+    var linenum = parseInt( this.getMachineIndex() ) - 1;
+    if (linenum+1 == this.getNextIndex() )
+        return false;
+    if ((linenum == 0 && dir == -1) || (linenum+1 == parseInt( this.getNextIndex() ) - 1 && dir == 1))
+        return false;
+    this.movelineto( linenum+dir+1 );
+    return true;
+}
+
+
+Machine.prototype.movelineto = function Machine_movelineto( newseq, bUpdateDataOnly )
+{
+    if (!NS.form.isInited()) return false;
+    newseq -= 1;
+    var linenum = parseInt( this.getMachineIndex() ) - 1;
+    if (linenum+1 == this.getNextIndex() )
+        return false;
+
+    this.setLinePosition(newseq, linenum);
+    this.setMachineIndex( newseq + 1 );
+    if( !bUpdateDataOnly )
+    {
+        this.recalcType = "move";
+        this.recalc();
+        this.buildtable();
+    }
+    return true;
+};
+
+
+Machine.prototype.moveLineToTopOrBottom = function Machine_moveLineToTopOrBottom(top)
+{
+    var bottom = !top;
+
+    if (!NS.form.isInited()) return false;
+    var linenum = parseInt( this.getMachineIndex() ) - 1;
+
+    // if they attempt to move a line that's on the bottom to the bottom, or
+    // a line that's on the top to the top, just return
+    if (top && linenum == 0)
+        return;
+    if (bottom && linenum+1 == this.getNextIndex()-1)
+        return false;
+
+    this.movelineto( top ? 1 : this.getLineCount());
+    return true;
+};
+
+
+
+
+Machine.prototype.clearline = function Machine_clearline(sync, startSegmentIndex, bNoFocus)
+{
+    
+    if (!NS.form.isInited()) return false;
+    if (this.isinserting)
+        return this.deleteline();
+    else
+        this.dataManager.cancelLineChanges();
+
+    this.setColToFirstEditable();
+
+    var oldidx = this.getAdjustedSegmentIndex( this.getMachineIndex(), false );
+	var canaryIsOn = false;
+
+    if (this.getFormName() == 'main_form')
+    {
+        for (var i = 0; i < this.countFormElements() ; i++ )
+        {
+            var elem = this.getFormElement( i );
+            elem.value = '';
+            if (isNLDropDown(elem)||isNLMultiDropDown(elem))
+            {
+                var dropdown = getDropdown(elem);
+                if (dropdown)
+                    dropdown.resetDropDown();
+            }
+        }
+    }
+    else
+    {
+        
+        for (var i=0; i < this.countFormElements(); i++)
+        {
+            var formElement = this.getFormElement( i );
+            formElement.removeAttribute('previousvalue');
+            if (formElement.type == 'hidden' || this.requiresClearingOnReset( i ) )
+            {
+                if ((isNumericField(formElement) || isCurrencyField(formElement)) && getNLNumericOrCurrencyDisplayField(formElement))
+                {
+                    formElement.value = NLStringToNormalizedNumberString(getNLNumericOrCurrencyDisplayField(formElement).defaultValue);
+                }
+                else
+                {
+                    formElement.value = formElement.getAttribute('defaultValue') || "";
+                }
+
+                if (formElement.isvalid === false)
+                {
+                    formElement.isvalid = true;
+                    NS.form.setValid(true);
+                }
+            }
+        }
+
+        this.miniform.reset();
+        
+        if (typeof(resetNLDropDowns) != 'undefined')
+            resetNLDropDowns(this.miniform);
+    }
+	
+    if (!canaryIsOn || !sync)
+    {
+		
+        for (var i=0; i < this.countFormElements(); i++)
+            if ( this.getFormElementType( i ) == "slaveselect" )
+                deleteAllSelectOptions(this.getFormElement(i));
+    }
+
+    for (var i=0; i < this.countFormElements(); i++)
+        if ( this.getFormElementType( i ) == "checkbox" )
+            NLCheckboxOnChange(this.getFormElement(i));
+
+    this.setMachineIndex( this.getNextIndex() );
+
+    
+    if (canaryIsOn && sync)
+    {
+		for (var i=0; i < this.countFormElements() ; i++)
+			
+			if (this.getFormElementFieldSet(i) && this.getFormElementFieldSet(i) == "" && this.getFormElementType( i ) == "slaveselect")
+				eval( getSyncFunctionName( this.getFormElementName( i ), this.name ) + '(true,null,true);');
+    }
+
+    
+    for (var i=0; i < this.countFormElements() ; i++)
+    {
+        if ((this.getFormElementType(i) == "text" || this.getFormElementType(i) == "textarea") && this.isElementPopupDisplayField(i)
+                && i < this.countFormElements()-1
+                && (this.getFormElementType( i+1 ) == "integer" && isSelect(this.getFormElement( i+1 ))))
+        {
+            setFormValue(this.getFormElement(i), getSelectText(this.getFormElement(i + 1)));
+        }
+    }
+
+    
+    this.synclinefields(oldidx < this.getMachineIndex() ? null : oldidx);
+
+    
+    this.setColToFirstEditable();
+    this.buildtable(startSegmentIndex, bNoFocus);
+    this.ischanged = false;
+    this.isinserting = false;
+
+    
+};
+
+
+Machine.prototype.viewline = function Machine_viewline( linenum, colnum, bForce )
+{
+    if (!bForce && !NS.form.isInited()) return false;
+
+    var currentRow = this.getSegmentAdjustedRowNum();
+    if ( this.isCurrentlySegmented && linenum < this.getNextIndex() && ( linenum < this.segmentStartIndex || linenum >= (this.segmentStartIndex + this.segmentSize + (this.segmentStartIndex == this.lastStartSegmentIndex ? min_segment_size : 0) ) ) )
+    {
+        var linenumber = linenum >= this.lastStartSegmentIndex + this.segmentSize ? linenum - min_segment_size : linenum; 
+        var idx = Math.floor((linenumber-1)/this.segmentSize)*this.segmentSize + 1;
+        this.segmentStartIndex = Math.max(1, idx);
+    }
+
+    if (linenum == currentRow && !this.isdeleting && this.isinline)
+    {
+        if(this.focusedColumn == colnum)
+        {
+            return false;
+        }
+        else
+        {
+            this.gotoField( colnum, true);
+            return true;
+        }
+    }
+    else if (!this.isdeleting)
+    {
+        
+        
+        if ( this.autoEdit && this.ischanged)
+            if (!this.addline())
+            {
+                return false;
+            }
+    }
+
+    if(colnum != null && colnum >= 0)
+    {
+        this.focusedColumn = colnum;
+    }
+    else
+    {
+        
+        this.setColToFirstEditable(true);
+    }
+
+    
+    if( !this.preSelectRow( linenum ) )
+    {
+        return;
+    }
+
+    this.setupLineData(linenum);
+
+    
+    this.buildtable( );
+
+    this.ischanged = false;
+    this.isinserting = false;
+};
+
+
+Machine.prototype.canAddLine = function Machine_canAddLine(showalerts)
+{
+    if (!NS.form.isInited()) return false;
+
+    var linenum = parseInt( this.getMachineIndex() );
+    var maxline = parseInt( this.getMaxIndex() );
+    if (!this.allow_insert && maxline < linenum+1)
+    {
+        if (showalerts)
+            alert("Please choose a line to edit");
+        return false;
+    }
+
+    if (!this.nlapivalidateline())
+       return false;
+
+    if(hasV2RecordOwnerEventHandler())
+    {
+        if (!handleValidationResult(callRecordScript({'eventName':'validateLine','fieldId':'null','sublistId':this.name,'arguments': arguments,'legacyScript': this.validateline()})))
+            return false;
+    }
+    else if (!handleValidationResult(this.validateline()))
+        return false;
+
+    var i;
+    var fields = [];
+    var labels = [];
+    var allFieldsAreEmpty = true;
+
+    for ( i = 0; i < this.countFormElements() ; i++)
+    {
+        if (((this.isElementRequired( i ) && this.isMandatoryOnThisLine(linenum,i)) || (this.getFormElementType( i ) == "namevaluelist" && this.getFormElement( i ).value.length > 0)) && this.doCheckMandatoryData(this.getFormElement( i ).name, linenum))
+        {
+            fields[fields.length] = this.getFormElement( i );
+            labels[labels.length] = this.getElementDisplayLabel( i );
+        }
+        // there are cases where machines have no mandatory fields.  In this case you can hit the add button to add a row with no values.
+        // this does not make sense, and complicates the back end a great deal.  As long as we think all the fields are
+        // empty, we'll check each field for a value
+        if( allFieldsAreEmpty && !isempty( this.getFormElement( i ) ) )
+            allFieldsAreEmpty = false;
+    }
+
+    if ( fields.length > 0 )
+    {
+        var emptylabels = checkMandatoryFields(fields, labels);
+        if ( emptylabels.length != 0 )
+        {
+            if (showalerts)
+            {
+                if (emptylabels.indexOf(",") != -1)
+                    alert("Please enter value(s) for: "+emptylabels);
+                else
+                    alert("Please enter a value for "+emptylabels);
+            }
+            return false;
+        }
+    }
+
+    // if all the fields are empty (a machine can have no mandatory fields) there is no point in adding the row
+    if ( allFieldsAreEmpty )
+    {
+        if (showalerts)
+            alert("Please enter a value into at least one field before adding the row.");
+        return false;
+    }
+
+    if (this.uniquefield != null && !this.checkunique())
+        return false;
+
+    return true;
+}
+
+
+Machine.prototype.addline = function Machine_addline(gonext)
+{
+    
+    if(this.isCurrentlySegmented)
+        gonext = true;
+
+    var linenum = parseInt( this.getMachineIndex() );
+    return this.canAddLine(true) && this.performAddLine(gonext, linenum);
+}
+
+
+Machine.prototype.performAddLine = function Machine_performAddLine(gonext, linenum)
+{
+    
+    var origLineData = this.getOrigLineArrayLine(linenum - 1);
+
+    
+    this.updateLineData();
+
+    if (this.preferredfield != null)
+        this.setPreferredValue(linenum);
+    this.recalcType = "commit";
+    this.recalc();
+    this.isinserting = false;
+    
+    if (gonext == true && linenum < this.getNextIndex()-1)
+    {
+        if(false) {
+            this.ischanged=false;
+            this.viewline(linenum+1);
+            this.postprocessline(linenum, origLineData);
+            this.nlapilinecommit(linenum);
+        } else {
+            this.ischanged=false;
+            this.postprocessline(linenum, origLineData);
+            this.nlapilinecommit(linenum);
+            this.viewline(linenum+1);
+        }
+    }
+    else
+    {
+        this.clearline(false);
+        this.postprocessline(linenum, origLineData);
+        this.nlapilinecommit(linenum);
+        this.getsyncline( linenum - 1);
+    }
+    this.waschanged = true;
+    return true;
+};
+
+
+
+Machine.prototype.isMandatoryOnThisLine = function Machine_isMandatoryOnThisLine(linenum,elementnum)
+{
+    var mand = false;
+    if (this.miniform.elements['mandatory'+this.getFormElementName(elementnum)])
+        mand = this.miniform.elements['mandatory'+this.getFormElementName(elementnum)].value != 'F';
+    else if (hasEncodedField(this.name,'mandatory'+this.getFormElement(elementnum).name))
+        mand = getEncodedValue(this.name,linenum,'mandatory'+this.getFormElement(elementnum).name) != 'F';
+    else if (this.getFormElement( elementnum ) != null)
+        mand = getRequired(this.getFormElement( elementnum ));
+    return mand;
+};
+
+
+Machine.prototype.getsyncline = function Machine_getsyncline( line )
+{
+    
+    if (window.virtualBrowser) return;
+
+    var syncline = "";
+    for (var i=0; i < this.countFormElements(); i++)
+    {
+        
+        if ((this.getFormElementType( i ) == "select" || this.getFormElementType( i ) == "slaveselect" || ( this.getFormElementType( i ) == "integer" && i > 0 && this.isElementPopupDisplayField(i - 1) )) && !isMultiSelect( this.getFormElement( i )))
+        {
+            var elem = this.getFormElement(i);
+            var val = getSelectValue( elem );
+            if ((val != null) && (val.length > 0))
+                syncline += getSyncFunctionName( elem.name, this.name ) + '(true,' + line + ');';
+        }
+    }
+    if (syncline.length > 0)
+        eval(syncline);
+};
+
+
+Machine.prototype.checkunique = function Machine_checkunique()
+{
+    var uniquefields = new Array(this.uniquefield);
+    var uniquelabels = new Array( window.virtualBrowser ? this.uniquefield : this.getElementDisplayLabel(this.getArrayPosition(this.uniquefield)) );
+    if (this.uniquefield2 != null)
+    {
+        uniquefields.push(this.uniquefield2);
+        uniquelabels.push( window.virtualBrowser ? this.uniquefield2 : this.getElementDisplayLabel(this.getArrayPosition(this.uniquefield2)) );
+    }
+    var labels = checkUniqueFields(this.name, uniquefields, uniquelabels)
+    if ( labels != null && labels.length > 0 )
+    {
+        alert(labels.join('/')+" must be unique");
+        return false;
+    }
+    return true;
+};
+
+Machine.prototype.checkMandatoryData = function Machine_checkMandatoryData(skipfield)
+{
+    var emptylabels = "";
+    for (var i = 0; i < this.countFormElements() ; i++)
+    {
+        if ( this.isElementRequired( i ) && this.getFormElement( i ).name != skipfield)
+        {
+            var field = this.getFormElement( i );
+            for (var linenum=1;linenum <= this.getLineCount(); linenum++)
+            {
+                // we can override the mandatoryness of a field on a line by line
+                // basis by creating a field called "mandatoryFIELDNAME", where FIELDNAME
+                // is the name of the field.  If the value of the "mandatoryFIELDNAME"
+                // field is "F" for a particular line, the field is not mandatory
+                // for that line.  For an example, see "mandatorylocation" in NLItemMachine.java.
+                if (this.doCheckMandatoryData(field.name,linenum) &&
+                    getEncodedValue(this.name,linenum,'mandatory'+field.name) != 'F' &&
+                    getEncodedValue(this.name,linenum,field.name).length == 0)
+                {
+                    emptylabels += (emptylabels.length != 0 ? ", " : "") + this.getElementDisplayLabel( i ) + " (on line " + linenum + ")";
+                    break;
+                }
+            }
+        }
+        else if (this.getFormElementType( i ) == "namevaluelist")
+        {
+            var field = this.getFormElement( i );
+            var mandfields = [];
+            for (var linenum=1;linenum <= this.getLineCount(); linenum++)
+            {
+                var nvarray = getEncodedValue(this.name,linenum,field.name).split(String.fromCharCode(4));
+                for (var j=0; j < nvarray.length; j++)
+                {
+                  var nv = nvarray[j].split(String.fromCharCode(3));
+                  if (nv[1] == 'T' && !(mandfields[nv[0]] == true))
+                  {
+                      if (nv[3].length == 0)
+                      {
+                        emptylabels += (emptylabels.length != 0 ? "," : "") + nv[2];
+                        mandfields[nv[0]] = true;
+                      }
+                  }
+                }
+            }
+        }
+    }
+    if (emptylabels.length > 0)
+    {
+        if (emptylabels.indexOf(',') != -1)
+          alert('Please enter value(s) for: ' + emptylabels);
+        else
+          alert('Please enter a value for ' + emptylabels);
+        return false;
+    }
+    else
+        return true;
+};
+
+
+Machine.prototype.setFocus = function Machine_setFocus(ct, bForce)
+{
+    
+    if (!bForce && window.loadcomplete != true)
+    {
+        return;
+    }
+
+    
+     if (document.page_is_resetting)
+         return;
+
+    
+    mchMachineWithFocus = this;
+    if (!ct)
+    {
+        this.setColToFirstEditable();
+        ct = this.focusedColumn;
+    }
+
+    var fldFocus;
+
+    if(fldFocus = this.isFieldEditable(ct))
+    {
+        var bSelectFieldContents = (fldFocus.type != 'textarea' || fldFocus.value.length==0); 
+        fldFocus.mch = this;
+        setTimeout(function(){doSetFocusStatic(fldFocus, bSelectFieldContents);}, 0);
+    }
+};
+
+
+
+Machine.prototype.gotoFieldWithName = function Machine_gotoFieldWithName( fieldName )
+{
+    var nIndex = this.getArrayPosition( fieldName );
+    this.gotoField(nIndex, true);
+    this.setFocus(this.focusedColumn, true);
+};
+
+
+Machine.prototype.gotoField = function Machine_gotoField(delta, bAbsolute)
+{
+    var origfocusedColumn = this.focusedColumn;
+
+    var bLineSubmitted = false;
+
+    if(bAbsolute)
+    {
+        this.focusedColumn = delta;
+    }
+    else
+    {
+        
+        this.focusedColumn = this.getFieldOffset(this.focusedColumn, delta);
+        
+        if (origfocusedColumn == this.focusedColumn)
+        {
+            
+            if (origfocusedColumn < this.countFormElements() && this.getFormElementType(origfocusedColumn) == "fieldset")
+            {
+                this.focusedColumn = this.getFieldOffset(-1, delta);
+            }
+        }
+    }
+
+    if(origfocusedColumn == this.focusedColumn)
+    {
+        
+        return false;
+    }
+
+    
+    var elems = this.getInputElements(true);
+
+    
+    for (var i=0; i < elems.length; i++)
+    {
+        var field = null;
+        var fieldAndLabel = this.getFieldOverride(elems, this.tableobj.getElementsByTagName("tr")[this.currentRowNum], this.currentRowNum, i);
+        if (fieldAndLabel)
+            field = fieldAndLabel[0];
+        else
+            field = elems[i];
+        if (field == null || (this.getFormElementFieldSet(i) && this.getFormElementFieldSet(i).length > 0))
+            continue;
+
+        var parent = field.parentNode;
+
+        if( parent != this.miniform)
+        {
+            if(!Mch_callAllOnBlur(this, field))
+            {
+                this.focusedColumn = origfocusedColumn;
+                return true;
+            }
+
+            parent = Machine_getParentTD(parent);
+
+            Machine_reparent(field, this.miniform);
+
+            
+            if (parent.origPaddingTop)
+                parent.style.paddingTop = parent.origPaddingTop;
+            if (parent.origPaddingRight)
+                parent.style.paddingRight = parent.origPaddingRight;
+            if (parent.origPaddingBottom)
+                parent.style.paddingBottom = parent.origPaddingBottom;
+            if (parent.origPaddingLeft)
+                parent.style.paddingLeft = parent.origPaddingLeft;
+
+            parent.className = parent.origClassName;
+
+            parent.height = "";
+        }
+    }
+
+    if(!bLineSubmitted)
+        this.editRow(this.currentRowNum, true);
+
+    this.transferInputFieldValuesToDisplayOnly();
+
+    return true; 
+};
+
+
+Machine.prototype.sort = function Machine_sort(nColumn)
+{
+    if (!NS.form.isInited()) return false;
+    if(nColumn == this.sortIndex)
+        this.sortDirUp = !this.sortDirUp;
+    else
+        this.sortDirUp = true;
+
+    this.sortIndex = nColumn;
+    var colType = this.getFormElementType(nColumn);
+    window.status = this.sortIndex+' '+colType;
+    var linearray = getLineArray(this.name);
+
+    var lines = [];
+    var i;
+    var str = '';
+    for (i=0;i < linearray.length;i++)
+    {
+        var cells = splitIntoCells(linearray[i]);
+        var val = cells[nColumn];
+        if(colType == 'select')
+            val = getlisttext( this.getFormElement(nColumn), val );
+        str += val + ' ';
+        lines[i] = new machine_line(val, colType, this.sortDirUp, i);
+    }
+
+    lines.sort(Machine_sortlines);
+    var newLineArray = [];
+    for (i=0;i< linearray.length;i++)
+    {
+        newLineArray[i] = linearray[lines[i].idx];
+
+    }
+    setLineArray(this.name,newLineArray);
+
+    this.buildtable();
+};
+
+function machine_line(val, type, dir_up, idx)
+{
+    this.val = val;
+    this.dir_up = dir_up;
+    this.type = type;
+    this.idx = idx;
+}
+
+function Machine_sortlines(line1, line2)
+{
+    return l_sortnodes2(line1.val, line2.val, line1.type.toUpperCase()) * (line1.dir_up ? 1 : -1);
+}
+
+function Mch_callAllOnBlur(mch, field)
+{
+    var returnValue = true;
+    if (field.onblur)
+    {
+        var bForcedAttribute = false;
+        if( field.type == "textarea" )
+        {
+            bForcedAttribute = true;
+            field.isvalid = true;
+        }
+
+        NS.jQuery(field).blur();
+
+        if(field.isvalid == false)
+        {
+            returnValue = false;
+        }
+        if(bForcedAttribute)
+        {
+            field.isvalid = null;
+        }
+    }
+    var childNodes = field.childNodes;
+
+    if (childNodes != null)
+    {
+        for (var i=0; i < childNodes.length; i++)
+        {
+            if(!Mch_callAllOnBlur(mch, childNodes[i]))
+            {
+                returnValue = false;
+                break;
+            }
+        }
+    }
+    return returnValue;
+}
+
+function MachineField_handleBlur()
+{
+    return this.originalOnBlur();
+}
+
+function MachineField_handleChange()
+{
+    var bReturnValue = false;
+    if (this.originalOnChange)
+    {
+        bReturnValue = this.originalOnChange();
+        if (bReturnValue != false && this.machine && this.machine.dataManager && this.machine.dataManager.setFieldValue)
+        {
+            var fld = this;
+            if ((isNumericField(fld) ||isCurrencyField(fld)) && getNLNumericOrCurrencyValueField( fld ))
+                fld = getNLNumericOrCurrencyValueField(fld);
+            this.machine.dataManager.setFieldValue(fld.name, fld.value);
+        }
+    }
+
+    Machine_scheduleTransfer(this.machine);
+
+    return bReturnValue;
+}
+
+
+function Machine_doDelayedTransfer(machine, bForce)
+{
+    if (!NS.form.isInited() || bForce)
+    {
+        
+        var timerID = machine.transferTimeout;
+        if(timerID)
+        {
+            clearTimeout(timerID);
+        }
+        machine.transferTimeout = setTimeout(function () {
+            Machine_doDelayedTransfer(machine, false);
+        }, 100);
+    }
+    else
+    {
+        machine.transferInputFieldValuesToDisplayOnly();
+    }
+}
+
+
+function Machine_scheduleTransfer(mch)
+{
+    mch.transferInputFieldValuesToDisplayOnly();
+    Machine_doDelayedTransfer(mch, true);
+}
+
+
+function doSetFocusStatic(input, bSelectField)
+{
+    try
+    {
+        
+        if(input.mch != mchMachineWithFocus)
+        {
+            return;
+        }
+
+        NLMachine_safeSetFocus(input);
+
+        if(bSelectField)
+        {
+            if (isPopupSelect(input) || isPopupMultiSelect(input))
+            {
+                var displayField = NLPopupSelect_getDisplayFieldByValueInput(input);
+                if (displayField && input.value.length > 0) 
+                    displayField.select();
+            }
+            else
+                input.select();
+        }
+    }
+    catch(e)
+    {
+        
+    }
+}
+
+function Machine_getParentTD(node)
+{
+    while(node.parentNode != null && node.parentNode.nodeName != "TD")
+        node = node.parentNode;
+    return node.parentNode;
+}
+
+function Machine_getParentTABLE(node)
+{
+    while(node.parentNode != null && node.parentNode.nodeName != "TABLE")
+        node = node.parentNode;
+    return node.parentNode;
+}
+
+function Machine_nodeIsCellContainer(node)
+{
+    return  node.nodeName
+            && node.nodeName.toLowerCase() == "div"
+            // Is not UIReskin field container
+            && node.className
+            && node.className.indexOf('uir-select-input-container') == -1;
+}
+
+function Machine_getCellContainer(node)
+{
+    while(node.parentNode != null && !Machine_nodeIsCellContainer(node.parentNode))
+    {
+        node = node.parentNode;
+    }
+
+    return node.parentNode;
+}
+
+
+
+
+
+
+Machine.prototype.updateMachineData = function Machine_updateMachineData(data, bNoFocus)
+{
+    if (!isArray(data))
+        return;
+    var lines = this.getLineArray(this.name);
+
+    for (var i=0; i < data.length; i++)
+    {
+        var rowIdx = data[i]["row"];
+        if (rowIdx == null)
+            rowIdx = this.getMachineIndex();
+
+        var linedata = splitIntoCells(lines[rowIdx - 1]);
+        if (linedata)
+        {
+            linedata.lineInstanceId = linedata.lineInstanceId || _doGetNewLineInstanceId();
+        }
+
+        for (var col in data[i])
+        {
+            if (col == "row")
+                continue;
+
+            var colIdx = this.getArrayPosition(col);
+            linedata[colIdx] = data[i][col];
+        }
+        lines[rowIdx - 1] = linedata;
+    }
+    this.setLineArray(lines, doGetFieldNamesArray(this.name));
+    this.loadline(this.getMachineIndex());
+    this.buildtable(null, bNoFocus);
+};
+
+Machine.prototype.setContentUpdated = function Machine_updateContent(contentUpdated)
+{
+    this.bContentUpdated = contentUpdated;
+};
+
+Machine.prototype.updateContent = function Machine_updateContent()
+{
+};
+
+Machine.prototype.updateDataManager = function Machine_updateDataManager()
+{
+    doClearLineArray(this.name);
+    var lines = doGetLineArray(this.name);
+    var linearray = [];
+    // convert each line from string to array
+    for (var i=0; i < lines.length; i++)
+        linearray[i]=doGetLineArrayLine(this.name, i);
+    this.setLineArray(linearray, doGetFieldNamesArray(this.name));
+};
+
+
+
+Machine.prototype.setupLineData = function Machine_setupLineData(linenum,iscopy)
+{
+    if (linenum <=0)
+        return;
+
+    var numRows = this.getNumRows();
+    if (numRows <= 0)
+        return;
+
+    var oriLineNum = linenum;
+    if (linenum > numRows)
+        linenum = numRows;
+
+    this.loadline( linenum,iscopy );
+
+    this.setMachineIndex( linenum );
+
+    for (var i=0; i < this.countFormElements(); i++)
+    {
+        if (this.getFormElementType( i ) == 'slaveselect')
+        {
+            eval(getSyncFunctionName( this.getFormElementName( i ), this.name ) + '(true, ' + (linenum - 1).toString()+', true);');
+        }
+    }
+
+    
+    this.synclinefields(oriLineNum > numRows ? null : linenum);
+};
+
+
+Machine.prototype.loadline = function Machine_loadline(linenum,iscopy)
+{
+    var i, linedata = this.getLineArrayLine(linenum - 1 );
+
+    if (linedata)
+    {
+        linedata.lineInstanceId = linedata.lineInstanceId || _doGetNewLineInstanceId();
+    }
+
+    for ( i = 0; i < this.countFormElements(); i++ )
+    {
+        if (iscopy == true && this.isElementNoCopy( i ))
+            continue;
+        var typeFormField = this.getFormElementType( i );
+        var objField = this.getFormElement( i );
+
+        if (typeFormField == "select" || typeFormField == "slaveselect")
+        {
+            if ( isMultiSelect(objField) || isPopupMultiSelect(objField) )
+                syncmultiselectlist( objField ,linedata[i], (i > 0 && this.isElementPopupDisplayField(i-1)) ? linedata[i-1] : null, true);
+             else
+                 synclist( objField,linedata[i], false );
+        }
+        else if ( typeFormField == "radio" )
+            syncradio( objField,linedata[i], false );
+        else if ( typeFormField == "address" || typeFormField == "textarea")
+        {
+             // Decode newlines that were encoded as char(5) by NLMachine.java to \n for the edit version of a field
+             var addrList = linedata[i].split(String.fromCharCode(5));
+             objField.value = addrList.join("\n");
+        }
+        else if (isNumericField(objField) || isCurrencyField(objField))
+        {
+            var value = linedata[i];
+            var pctSign = ((typeof linedata[i] == 'string') && (linedata[i].indexOf('%') != -1));
+            if (typeFormField == "currency")
+                value = format_currency( parseFloat(linedata[i]) );
+            else if (typeFormField == "currency2" || typeFormField == "rate")
+                value = format_rate( parseFloat(linedata[i]), pctSign);
+            objField.value = value;
+            if(pctSign)
+                value = value.replace('%','');
+            getNLNumericOrCurrencyDisplayField(objField).value = NLNumberToString(value) + (pctSign ? "%" : "");
+        }
+        else if ( typeFormField == "checkbox" )
+            setNLCheckboxValue(objField, (linedata[i] == "T"));
+        else if ( typeFormField == "namevaluelist" )
+        {
+            objField.value = linedata[i];
+            syncnamevaluelist( objField );
+        }
+        else if (typeFormField == 'fieldset_inline')
+        {
+            setInlineTextValue(document.getElementById(this.getFormElementName(i)+"_val"), linedata[i]);
+        }
+        
+        else if ( isSelect(objField))
+            synclist( objField,linedata[i], false );
+        else if ( typeFormField == "color" )
+        {
+            objField.value = (linedata[i] == "null")?"":linedata[i];
+            
+            document.getElementById(objField.name+'_chip').style.backgroundColor = ((linedata[i]=="")||(linedata[i]=="null"))?"#FFFFFF": (linedata[i].length>0 ? linedata[i] : "#FFFFFF");
+        }
+        else if ( typeFormField == "timeselector")
+        {
+            objField.parentNode.controller.setValue(linedata[i], false);
+        }
+        else if ( typeFormField != "fieldset" )
+        {
+            objField.value = linedata?linedata[i]:linedata;
+            
+            if (isCheckboxImageField(objField))
+                objField.onclick();
+
+            
+            
+            if(this.isElementPopupDisplayField(i))
+                objField.setAttribute('previousvalue',objField.value);
+        }
+    }
+};
+
+
+Machine.prototype.insertdata = function Machine_insertdata(data, linenum)
+{
+    this.dataManager.insertLines(splitIntoRows(data), linenum);
+    var numRows = this.getNumRows();
+
+    this.setIndex( numRows + 1 );
+    this.setMachineIndex( numRows + 1 );
+    return true;
+};
+
+
+Machine.prototype.getLineData = function Machine_getLineData(linenum)
+{
+    var formElems = this.countFormElements();
+    var linedata = [];
+    for (var i=0; i < formElems; i++)
+    {
+        var curType = this.getFormElementType( i );
+        var curName = this.getFormElementName( i );
+        var curElement = this.getFormElement( i, linenum );
+
+        if (!curElement)
+        {
+            linedata[i] = null;
+        }
+        else if ( curType == "select" || curType == "slaveselect" )
+        {
+            if (isMultiSelect( curElement ) || isPopupMultiSelect( curElement ))
+            {
+                linedata[i] = getMultiSelectValues( curElement );
+            }
+            else
+            {
+                linedata[i] = getSelectValue( curElement );
+            }
+        }
+        else if ( curType == "checkbox" )
+        {
+            linedata[i] = curElement.checked ? "T" : "F";
+        }
+        else if ( curType == "radio" )
+        {
+            for (var j=0; j < curElement.length; j++)
+                if ( curElement[j].checked)
+                    linedata[i] = curElement[j].value;
+        }
+        else if ((curType == "text" || curType == "textarea") && this.isElementPopupDisplayField(i)
+                && i < this.countFormElements()-1
+                && (this.getFormElementType( i+1 ) == "integer" || this.getFormElementType( i+1 ) == "slaveselect")
+                && this.getFormElement( i+1 ).value.length == 0)
+        {
+            linedata[i] = '';
+        }
+        else if ( curType == "address" || curType == "textarea")
+        {
+             linedata[i] = (typeof curElement.value == 'undefined' || curElement.value == null) ? '' : curElement.value.replace(/\r/g,'').replace(/\n/g,String.fromCharCode(5));
+        }
+        else if (curType == 'fieldset_inline')
+        {
+             linedata[i] = getInlineTextValue(document.getElementById(this.getFormElementName(i)+"_val"));
+        }
+        else if (curType != "fieldset")
+        {
+            linedata[i] = curElement.value;
+        }
+        
+        if (curElement != null && this.getFormElementFieldSet && this.getFormElementFieldSet(i) && this.getFormElementFieldSet(i).length > 0)
+        {
+            var spanName = this.name + "_" + (curName.indexOf( '_display' ) == -1 ? curName : this.getFormElementName( i+1 )) + '_fs';
+            var spanObj = document.getElementById( spanName );
+            if (spanObj != null && spanObj.style.display == 'none')
+            {
+                linedata[i] = "";
+            }
+        }
+
+        
+        if (linedata[i] != null)
+        {
+            var regExp = new RegExp("[" + String.fromCharCode(1) + String.fromCharCode(2) + "]", "g");
+            
+            linedata[i] = new String(linedata[i]).replace(regExp,'.');
+        }
+        
+        if ( window.virtualBrowser )
+        {
+            var lineindex = parseInt( this.getMachineIndex() );
+            setEncodedValue(this.name, lineindex, curName,  linedata[i] != null ? linedata[i] : '');
+        }
+    }
+    return linedata;
+};
+
+
+Machine.prototype.updateLineData = function Machine_updateLineData( )
+{
+    
+    var linenum = parseInt( this.getMachineIndex() );
+    var linedata = this.getLineData();
+    var oldlinedata = this.getLineArrayLine(linenum - 1); // strangely, getLineArrayLine is 0-based while set is 1-based
+    linedata.lineInstanceId = (oldlinedata && oldlinedata.lineInstanceId) || _doGetNewLineInstanceId();
+    this.setLineArrayLine(linedata, linenum);
+
+    var maxline = parseInt( this.getNextIndex() );
+    if (maxline < linenum+1)
+        this.setIndex( (linenum+1).toString() );
+};
+
+
+Machine.prototype.updateDependentFieldValues = function Machine_updateDependentFieldValues( linenum )
+{
+    var lineData = this.getLineData(linenum);
+    if (this.dataManager.updateDependentFieldValues)
+    {
+        if (typeof linenum == "undefined" || linenum == null)
+            linenum = this.getMachineIndex();
+        this.dataManager.updateDependentFieldValues(lineData, linenum - 1);
+    }
+};
+
+
+Machine.prototype.getLineFieldValue = function Machine_getLineFieldValue (linedata, fieldname )
+{
+    var nPos = this.getArrayPosition( fieldname );
+    if ( nPos == -1 )
+        return false;
+    return linedata != null && linedata.length > nPos ? linedata[ nPos ] : null ;
+};
+
+
+Machine.prototype.setMainFormData = function Machine_setMainFormData( data )
+{
+    this.mainform.elements[ this.name+'data'].value = data;
+    this.waschanged = true;
+};
+
+Machine.prototype.getMainFormData = function Machine_getMainFormData( )
+{
+    return this.mainform.elements[ this.name+'data' ].value;
+};
+
+Machine.prototype.isRowRequired = function Machine_isRowRequired( linenum )
+{
+    
+    if(this.addOnly())
+        return true;
+
+    return this.dataManager.isLineRequired(linenum);
+};
+
+Machine.prototype.getNumRows = function Machine_getNumRows()
+{
+    return this.dataManager.getNumRows();
+};
+
+Machine.prototype.getLineCount = function Machine_getLineCount()
+{
+    return this.dataManager.getNumRows();
+};
+
+
+Machine.prototype.getNumOfRows = function Machine_getNumOfRows ()
+{
+    return this.getLineCount();
+};
+
+Machine.prototype.getLineArray = function Machine_getLineArray()
+{
+    return this.dataManager.getLineArray();
+};
+
+Machine.prototype.setLineArray = function Machine_setLineArray(linearray, fieldNames)
+{
+    this.dataManager.setLineArray(linearray, fieldNames);
+};
+
+Machine.prototype.getLineArrayLine = function Machine_getLineArrayLine(linenum)
+{
+    return this.dataManager.getLineArrayLine(linenum);
+};
+
+Machine.prototype.getOrigLineArrayLine = function Machine_getOrigLineArrayLine(linenum)
+{
+	return this.dataManager.getOrigLineArrayLine(linenum);
+};
+
+Machine.prototype.setLineArrayLine = function Machine_setLineArrayLine(line, linenum)
+{
+    this.dataManager.setLineArrayLine(linenum, line);
+};
+
+Machine.prototype.hasLineArray = function Machine_hasLineArray()
+{
+    return this.dataManager.hasLineArray();
+};
+
+Machine.prototype.clearLineArray = function Machine_clearLineArray()
+{
+    this.dataManager.clearLineArray();
+};
+
+
+Machine.prototype.insertLine = function Machine_insertLine(linedata, linenum)
+{
+    this.dataManager.insertLine(linedata, linenum);
+};
+
+
+Machine.prototype.saveLine = function Machine_saveLine(linedata, linenum)
+{
+    this.dataManager.saveLine(linedata, linenum);
+};
+
+Machine.prototype.setLinePosition = function Machine_setLinePosition (newPos, currentPos)
+{
+    this.dataManager.setLinePosition(newPos, currentPos);
+};
+
+Machine.prototype.writeLineArray = function Machine_writeLineArray()
+{
+    this.dataManager.writeLineArray();
+};
+
+Machine.prototype.getFieldValue = function Machine_getFieldValue (fieldname, lineNum, bOldValueForCurrentLine)
+{
+    return this.dataManager.getLineFieldValue(fieldname, lineNum, bOldValueForCurrentLine&&this.canUseOldFieldValue(lineNum));
+};
+
+Machine.prototype.findEncodedValue = function Machine_findFieldValueLineNum(fieldname, value, bOldValueForCurrentLine)
+{
+    return this.dataManager.findFieldValueLineNum(fieldname, value, bOldValueForCurrentLine&&this.canUseOldFieldValue(this.getMachineIndex()));
+};
+
+Machine.prototype.setFieldValue = function Machine_setFieldValue(linenum, fieldname, value)
+{
+    this.dataManager.setLineFieldValue(fieldname, value, linenum);
+};
+
+Machine.prototype.setFieldInputValue = function Machine_setFieldInputValue(fieldname, value, text,firefieldchanged)
+{
+    this.dataManager.setFieldInputValue(fieldname, value, firefieldchanged, text);
+};
+
+Machine.prototype.setEncodedValues = function Machine_setEncodedValues(linenum, form)
+{
+    //this.dataManager.setEncodedValues(linenum, form);
+    doSetEncodedValues(this.name, linenum, form);
+};
+
+Machine.prototype.setFormValues = function Machine_setFormValues(linenum, form, fld_name, firefieldchanged)
+{
+    //this.dataManager.setFormValues(linenum, form, fld_name, firefieldchanged);
+    doSetFormValues(this.name, linenum, form, fld_name, firefieldchanged);
+};
+
+Machine.prototype.getArrayPosition = function Machine_getArrayPosition( name )
+{
+    return  this.getFieldPosition(name);
+};
+
+Machine.prototype.getFieldPosition = function Machine_getFieldPosition( name )
+{
+    return  this.dataManager.getFieldPosition(name);
+};
+
+Machine.prototype.getFormFieldNames = function Machine_getFormFieldNames( )
+{
+    return this.dataManager.getFieldNames();
+};
+
+
+Machine.prototype.hasEncodedField = function Machine_hasEncodedField(fieldname)
+{
+    return this.hasField(fieldname);
+};
+
+Machine.prototype.hasField = function Machine_hasField(fieldname)
+{
+    return this.dataManager.hasField(fieldname);
+};
+
+Machine.prototype.hasRecordManager = function Machine_hasRecordManager()
+{
+    return (this.dataManager && this.dataManager.getActiveRow);
+};
+
+Machine.prototype.canUseOldFieldValue = function Machine_canUseOldFieldValue(lineNum)
+{
+    return !(lineNum > this.getNumRows()); //can get the old value if the line has conterpart in linearray
+};
+
+
+
+function NLMachineDataManager (machine)
+{
+    this.machine = machine;
+}
+NLMachineDataManager.prototype.setActiveLine = function NLMachineDataManager_setActiveLine(linenum)
+{
+};
+
+NLMachineDataManager.prototype.getNumRows = function NLMachineDataManager_getNumRows()
+{
+    return doGetLineCount(this.machine.name);
+};
+
+NLMachineDataManager.prototype.isLineRequired = function NLMachineDataManager_isLineRequired( linenum )
+{
+    return (this.getLineFieldValue('reqline', linenum) == 'T') ;
+};
+
+NLMachineDataManager.prototype.getLineArray = function NLMachineDataManager_getLineArray()
+{
+    return doGetLineArray(this.machine.name);
+};
+
+NLMachineDataManager.prototype.setLineArray = function NLMachineDataManager_setLineArray(linearray)
+{
+    doSetLineArray(this.machine.name, linearray);
+};
+
+NLMachineDataManager.prototype.getLineArrayLine = function NLMachineDataManager_getLineArrayLine(linenum)
+{
+    
+    return doGetLineArrayLine (this.machine.name, linenum);
+};
+
+NLMachineDataManager.prototype.getOrigLineArrayLine = function NLMachineDataManager_getOrigLineArrayLine(linenum)
+{
+	
+	return this.getLineArrayLine(linenum);
+};
+
+NLMachineDataManager.prototype.setLineArrayLine = function NLMachineDataManager_setLineArrayLine(linenum, line)
+{
+    doSetLineArrayLine(this.machine.name, linenum - 1, line);
+};
+
+NLMachineDataManager.prototype.hasLineArray = function NLMachineDataManager_hasLineArray()
+{
+    return doHasLineArray(this.machine.name);
+};
+
+NLMachineDataManager.prototype.clearLineArray = function NLMachineDataManager_clearLineArray()
+{
+    return doClearLineArray(this.machine.name);
+};
+
+NLMachineDataManager.prototype.cancelLineChanges = function NLMachineDataManager_cancelLineChanges()
+{
+
+};
+
+NLMachineDataManager.prototype.removeLine = function NLMachineDataManager_removeLine (linenum)
+{
+    
+    var linearray = this.getLineArray(this.name);
+    linearray.splice(linenum-1, 1);
+    this.setLineArray(linearray);
+};
+
+NLMachineDataManager.prototype.removeAllLines = function NLMachineDataManager_removeAllLines ()
+{
+    clearLineArray(this.machine.name);
+};
+
+
+NLMachineDataManager.prototype.deleteLineItems = function NLMachineDataManager_deleteLineItems(start, end)
+{
+    return doDeleteLineItems(this.machine.name, start, end);
+};
+
+
+NLMachineDataManager.prototype.addLine = function NLMachineDataManager_addLine(linenum, initValues)
+{
+
+};
+
+
+NLMachineDataManager.prototype.insertLine = function NLMachineDataManager_insertLine(linedata, linenum)
+{
+    if (!linedata)
+    {
+        linedata = new Array(this.machine.countFormElements());
+        for (var i=0; i<linedata.length; i++)
+            linedata[i] = '';
+    }
+    linedata.lineInstanceId = linedata.lineInstanceId || _doGetNewLineInstanceId();
+    var linearray = this.getLineArray( this.name );
+    linearray.splice(linenum - 1, 0, linedata);
+    this.setLineArray(linearray);
+};
+
+
+NLMachineDataManager.prototype.insertLines = function Machine_insertLines (data, linenum)
+{
+    var linearray = this.getLineArray(this.name);
+    var linearray1 = linearray.slice(0,linenum-1);
+    var linearray2 = linearray.slice(linenum-1);
+
+	for(var index=0; index<data.length; index++)
+	{
+		var row = data[index];
+		if(typeof(row) == 'string')
+		{
+			data[index] = row = splitIntoCells(row);
+		}
+
+		var numMissing = this.machine.form_elems.length - row.length;
+		for(var j=0; j<numMissing; j++)
+			row.push("");
+		row.lineInstanceId = row.lineInstanceId || _doGetNewLineInstanceId();
+	}
+
+    setLineArray(this.machine.name,linearray1.concat(data).concat(linearray2));
+};
+
+NLMachineDataManager.prototype.saveLine = function NLMachineDataManager_saveLine (linedata, linenum)
+{
+};
+
+
+NLMachineDataManager.prototype.setLinePosition = function NLMachineDataManager_setLinePosition (newPos, currentPos)
+{
+    if (!currentPos)
+        currentPos = parseInt( this.machine.getMachineIndex() ) - 1;
+
+    var linearray = this.getLineArray(this.name);
+    var oldrow = linearray[currentPos], i;
+    // reorder the line array accordingly
+    if (newPos < currentPos)
+    {
+        for(i = (currentPos-1); i >= newPos; i--)
+            linearray[i+1] = linearray[i];
+        linearray[newPos] = oldrow;
+    }
+    else
+    {
+        for (i = currentPos; i < newPos; i++)
+            linearray[i] = linearray[i+1];
+        linearray[newPos] = oldrow;
+    }
+    this.setLineArray(linearray);
+};
+
+NLMachineDataManager.prototype.writeLineArray = function NLMachineDataManager_writeLineArray()
+{
+
+    var machine_name = this.machine.name;
+	var lineids = [];
+	if( hasLineArray(machine_name) )
+	{
+		var linearray = this.getLineArray();
+		for (var i=0;i<linearray.length;i++)
+		{
+			var lineid = null;
+			if (linearray[i] != null && typeof(linearray[i]) != 'string')
+			{
+				lineid = linearray[i].lineInstanceId;
+				linearray[i] = linearray[i].join(String.fromCharCode(1));
+			}
+			lineids.push(lineid);
+		}
+		document.forms['main_form'].elements[machine_name+'data'].value = getLineArray(machine_name).join(String.fromCharCode(2));
+	}
+	(window._prevLineIds = window._prevLineIds || {})[machine_name] = lineids;
+
+};
+
+NLMachineDataManager.prototype.getLineFieldValue = function NLMachineDataManager_getLineFieldValue(fieldname, linenum)
+{
+    if(typeof linenum == 'undefined' || linenum == null)
+        linenum = this.machine.getMachineIndex();
+    var lines = doGetLineArray(this.machine.name);
+
+    if (linenum <= 0 || linenum > lines.length)
+        return null;
+
+    return doGetEncodedValue(this.machine.name, linenum , fieldname);
+};
+
+NLMachineDataManager.prototype.findFieldValueLineNum = function NLMachineDataManager_findFieldValueLineNum(fieldname, value)
+{
+	return doFindEncodedValue(this.machine.name, fieldname, value);
+};
+
+NLMachineDataManager.prototype.setLineFieldValue = function NLMachineDataManager_setLineFielddValue(fieldname, value, linenum)
+{
+    doSetEncodedValue(this.machine.name, linenum, fieldname, value);
+};
+
+NLMachineDataManager.prototype.setFieldInputValue = function NLMachineDataManager_setFieldInputValue(fieldname, value, firefieldchanged, text, linenum)
+{
+
+};
+
+NLMachineDataManager.prototype.setInitialFieldValues = function NLMachineDataManager_setInitialFieldValues(data, rowIdx)
+{
+
+};
+NLMachineDataManager.prototype.updateDependentFieldValues = function NLMachineDataManager_updateDependentFieldValues(data, rowIdx)
+{
+
+};
+
+NLMachineDataManager.prototype.hasField = function NLMachineDataManager_hasField(fieldname)
+{
+    return doHasEncodedField(this.machine.name, fieldname);
+};
+
+NLMachineDataManager.prototype.getFieldPosition = function NLMachineDataManager_getFieldPosition(fieldname)
+{
+    return doGetEncodedFieldPosition(this.machine.name, fieldname);
+};
+
+NLMachineDataManager.prototype.getFieldNames = function NLMachineDataManager_getFieldNames( )
+{
+    return doGetFieldNamesArray(this.machine.name);
+};
+
+ 
+
+
+
+
+
+function Machine_validateline()
+{
+    return true;
+}
+
+
+function Machine_validatedelete()
+{
+    return true;
+}
+
+
+function Machine_postdeleteline(linenum, origLineData)
+{
+}
+
+
+function Machine_validateinsert()
+{
+    return true;
+}
+
+function Machine_doCheckMandatoryData(fldnam, linenum)
+{
+ return true;
+}
+
+
+function Machine_lineCommit(linenum, origLineData)
+{
+}
+
+
+function Machine_postEditRow()
+{
+}
+
+
+function Machine_preSelectRow(rowNum)
+{
+    return true;
+}
+
+
+function Machine_lineInit(rowNum)
+{
+}
+
+
+function Machine_getFieldOverride(elems, row, rowNum, elemIdx)
+{
+    return null;
+}
+
+
+function Machine_isFieldEditableOverride(elemIdx)
+{
+    return null;
+}
+
+
+
+function Machine_isNeedUpdateFieldDisplayValue(field)
+{
+    return field.parentNode == this.miniform;
+}
+
+
+
+function Machine_getDisplayCellContentOverride(nIndex, data, lineNum)
+{
+    return null;
+}
+
+
+
+function Machine_customizeDisplayCell(cell, nIndex, data, lineNum)
+{
+}
+
+
+function Machine_postBuildTable()
+{
+    return;
+}
+
+function Machine_recalc(isOnLoad)
+{
+}
+
+
+Machine.prototype.nlapilinecommit = function Machine_nlapiLineCommit(linenum)
+{
+    if (document.forms['main_form'].elements.nsapiLC != null)
+        nlapiLineCommit(this.name, linenum);
+};
+
+Machine.prototype.nlapipostdeleteline = function Machine_nlapiPostDeleteLine(linenum)
+{
+    if (document.forms['main_form'].elements.nsapiPD != null)
+        nlapiPostDeleteLine(this.name, linenum);
+}
+
+Machine.prototype.nlapirecalc = function Machine_nlapirecalc(isOnLoad)
+{
+    if (document.forms['main_form'].elements['nlapiRC'] != null || document.forms['main_form'].elements['nsapiRC'] != null)
+        nlapiRecalc(this.name, false, nvl(this.recalcType, "commit"));
+    this.lastRecalcType = this.recalcType;
+    this.recalcType = null;
+};
+
+Machine.prototype.nlapilineinit = function Machine_nlapiLineInit()
+{
+    if (document.forms['main_form'].elements.nlapiLI != null || document.forms['main_form'].elements.nsapiLI != null)
+        nlapiLineInit(this.name);
+};
+
+Machine.prototype.nlapivalidateline = function Machine_nlapiValidateLine()
+{
+    if (document.forms['main_form'].elements.nlapiVL != null || document.forms['main_form'].elements.nsapiVL != null)
+        return nlapiValidateLine(this.name);
+    return true;
+};
+
+Machine.prototype.nlapivalidatedelete = function Machine_nlapiValidateDelete(lineCount)
+{
+    if (document.forms['main_form'].elements.nlapiVD != null || document.forms['main_form'].elements.nsapiVD != null)
+        return nlapiValidateDelete(this.name, lineCount);
+    return true;
+};
+
+Machine.prototype.nlapivalidateinsert = function Machine_nlapiValidateInsert()
+{
+    if (document.forms['main_form'].elements.nlapiVI != null || document.forms['main_form'].elements.nsapiVI != null)
+        return nlapiValidateInsert(this.name);
+    return true;
+};
+
+
+
+function storeCheckboxState(field)
+{
+    if (field.type == "checkbox" && field.checked != null)
+    {
+        field.doubleCheck = field.checked;
+    }
+    var childNodes = field.childNodes;
+    if (childNodes == null)
+        return;
+    for (var i=0; i < childNodes.length; i++)
+        storeCheckboxState(childNodes[i]);
+}
+
+function restoreCheckboxState(field)
+{
+    if (field.type == "checkbox" && field.doubleCheck != null)
+    {
+        setNLCheckboxValue(field,field.doubleCheck);
+        field.doubleCheck = null;
+    }
+    var childNodes = field.childNodes;
+    if (childNodes == null)
+        return;
+    for (var i=0; i < childNodes.length; i++)
+        restoreCheckboxState(childNodes[i]);
+}
+
+function getCheckboxState(field)
+{
+    if( field.checked != null)
+    {
+        return field.checked;
+    }
+    var childNodes = field.childNodes;
+    if (childNodes == null)
+        return null;
+    for (var i=0; i < childNodes.length; i++)
+    {
+        var ret = getCheckboxState(childNodes[i]);
+        if( ret != null)
+        {
+            return ret;
+        }
+    }
+    return null;
+}
+
+function setMachineChanged(name, fld)
+{
+     
+    if (fld != null && (typeof fld != "undefined") && (isNumericField(fld) || isCurrencyField(fld))){
+        fld = getNLNumericOrCurrencyValueField(fld);
+    }
+    if ( fld == null || !fld.noslaving )
+    {
+        NS.form.setChanged(true);
+        if ( allowAddLines(name) )
+            eval( name + "_machine."+(fld == null ? "waschanged" : "ischanged")+" = true;" );
+        else
+            eval( name + "ischanged = true;" );
+    }
+}
+
+
+function isMachineChanged(name)
+{
+    if ( allowAddLines(name) ) {
+	    return eval ( name + "_machine.ischanged" );
+    }
+    else {
+	    if (eval("typeof " + name + "ischanged") !== "undefined")
+		    return eval(name + "ischanged");
+	    else
+		    return false;
+    }
+}
+
+
+function wasMachineChanged(name)
+{
+    if ( allowAddLines(name) ) {
+	    return eval ( name + "_machine.waschanged" );
+    }
+    else {
+	    if (eval("typeof " + name + "ischanged") !== "undefined")
+		    return eval(name + "ischanged");
+	    else
+		    return false;
+    }
+}
+
+
+
+
+function getInputElementsFromTable(row)
+{
+    var inpts = row.getElementsByTagName("INPUT");
+    var textareas = row.getElementsByTagName("TEXTAREA");
+
+    var inputs = [], i;
+    for (i=0; i < inpts.length; i++)
+        inputs[inputs.length] = inpts[i];
+    for (i=0; i < textareas.length; i++)
+        inputs[inputs.length] = textareas[i];
+    return inputs;
+}
+
+function getColumnWidthForNode(node)
+{
+    var display = node.style.display;
+    node.style.display = "none";
+
+    var up = node;
+    var returnMe = 0;
+    while (up != null && up.nodeName != "TD")
+        up = up.parentNode;
+    if (up != null)
+         returnMe = up.offsetWidth;
+    node.style.display = display;
+    return returnMe;
+}
+
+Machine.prototype.addblankrow = function Machine_addblankrow()
+{
+    var linearray = this.getLineArray(this.name);
+    var fieldnames = this.getFormFieldNames();
+    var blankrow = new Array(fieldnames.length);
+
+    for (var i=0; i < fieldnames.length; i++)
+        blankrow[i] = '';
+
+    linearray[linearray.length] = blankrow.join(String.fromCharCode(1));
+    setLineArray(this.name,linearray);
+
+    this.incrementIndex();
+
+    return true;
+};
+
+Machine.prototype.clearmachine = function Machine_clearmachine()
+{
+    return this.removeAllLines();
+};
+
+Machine.prototype.removeAllLines = function Machine_removeAllLines(bNoFocus)
+{
+	var lineCount = this.getLineCount();
+	if (lineCount != 0 && NS.form.isInited()) {
+		if (!this.nlapivalidatedelete(lineCount)) {
+			return false;
+		}
+	}
+	this.setMainFormData( '' );
+	this.setIndex( 1 );
+    
+    this.dataManager.removeAllLines();
+    this.clearline(true, null, bNoFocus);
+    return true;
+};
+
+
+Machine.prototype.deletelines = function Machine_deletelines(start, end)
+{
+    var val = this.dataManager.deleteLineItems(start, end);
+    if (this.dataManager.removeRows) 
+        this.setIndex( this.getNextIndex() - (end - start) );
+    return val;
+};
+
+function NLListMachine(name, mainform, miniform, tableobj, allow_insert, dataManager)
+{
+    this.base = Machine;
+    this.base(name, mainform, miniform, tableobj, allow_insert, dataManager);
+    this.type = LIST_MACHINE;
+    var fieldnames = doGetFieldNamesArray(this.name);
+    this.updateFormElements();
+}
+
+NLListMachine.prototype = new Machine;
+
+NLListMachine.prototype.viewline = function NLListMachine_viewline(linenum)
+{
+    this.setMachineIndex(linenum);
+};
+
+NLListMachine.prototype.addline = function NLListMachine_addline(gonext)
+{
+    this.dataManager.saveRow();
+};
+
+NLListMachine.prototype.insertline = function NLListMachine_insertline(gonext)
+{
+// not supported
+};
+
+NLListMachine.prototype.deleteline = function NLListMachine_deleteline(gonext)
+{
+// not supported
+};
+
+NLListMachine.prototype.clearline = function NLListMachine_clearline(gonext)
+{
+// not supported
+};
+
+NLListMachine.prototype.loadline = function NLListMachine_loadline()
+{
+// not supported
+};
+
+NLListMachine.prototype.buildtable = function NLListMachine_buildtable(startIndex, bNoFocus, bExpandCurrentRow)
+{
+// not supported
+};
+
+NLListMachine.prototype.setupLineData = function NLListMachine_setupLineData(linenum,iscopy)
+{
+    this.updateDataManager();
+    this.setMachineIndex( linenum );
+};
+
+NLListMachine.prototype.updateContent = function NLListMachine_updateContent()
+{
+    if (this.bContentUpdated)
+    {
+        this.updateFormElements();
+        this.updateDataManager();
+        this.setContentUpdated(false);
+    }
+};
+
+NLListMachine.prototype.updateFormElements = function NLListMachine_updateFormElements(fromline, toline)
+{
+    if (typeof fromline == "undefined" || fromline == null)
+        fromline = 0;
+    if (typeof toline == "undefined" || toline == null)
+        toline = this.getNumRows();
+
+    var numFields = this.countFormElements();
+    for (var i=fromline; i <=toline; i++)
+    {
+        for (var j=0; j< numFields; j++)
+        {
+            var formElement = this.getFormElement(j, i+1);
+            if (formElement)
+                formElement.machine = this;
+        }
+    }
+};
+
+NLListMachine.prototype.setEncodedValues = function NLListMachine_setEncodedValues(linenum, form)
+{
+    if ( form == null )
+        form = document.forms[this.name+'_form'];
+
+    var fieldnames = doGetFieldNamesArray(this.name);
+    var fieldflags = splitIntoCells( document.forms['main_form'].elements[this.name+'flags'].value );
+
+    this.dataManager.setActiveRow(linenum -1);
+
+    var value;
+    for (var i=0; i < fieldnames.length; i++)
+    {
+        if ( isValEmpty( fieldnames[i] ) )
+            continue;
+        if ((fieldflags[i] & 4) == 0)
+            continue;
+        else
+        {
+            var fld;
+			if (form.elements[fieldnames[i]] != null && form.elements[fieldnames[i]][0] != null && form.elements[fieldnames[i]][0].type == "radio")
+			{
+				for ( var j = 0; j < form.elements[fieldnames[i]].length; j++ )
+					if ( form.elements[fieldnames[i]][j].value == linenum )
+						fld = form.elements[fieldnames[i]][j]
+			}
+			else if ((fieldflags[i] & 8) != 0)
+                fld = form.elements[fieldnames[i+1]+linenum.toString()+"_display"];
+            else
+                fld = form.elements[fieldnames[i]+linenum.toString()];
+            if (fld != null)
+			{
+				if (fld.type == "checkbox" || fld.type == "radio")
+					value = fld.checked ? 'T' : 'F';
+				else if (fld.type == "select-one")
+					value = fld.options[fld.selectedIndex].value;
+				else if (fld.type == "textarea")
+					value = fld.value.replace(/\r/g,'').replace(/\n/g,String.fromCharCode(5));
+				else
+					value = fld.value;
+                this.dataManager.setFieldValue(fieldnames[i], value, false, null);
+			}
+ 		}
+    }
+};
+
+NLListMachine.prototype.hasEncodedField = function NLListMachine_hasEncodedField(fieldname)
+{
+    return doHasEncodedField(this.name, fieldname);
+};
+
+NLListMachine.prototype.setFieldInputValue = function NLListMachine_setFieldInputValue(fieldname, value, firefieldchanged, text)
+{
+    var linenumIdx = fieldname.search( /(\d)+$/ );
+    var linenum = fieldname.substring( linenumIdx );
+    var fieldname = fieldname.substring(0, linenumIdx);
+
+    this.dataManager.setFieldInputValue(fieldname, value, firefieldchanged, text, linenum);
+};
+
+
+NLListMachine.prototype.canUseOldFieldValue = function NLListMachine_canUseOldFieldValue(lineNum)
+{
+    return false;
+};
+
+
+function popupBinDiv(binstr, fld, linenumber, qtyfield)
+{
+    if (binstr == null || binstr.length==0)
+        return;
+    var qty = parseFloat(qtyfield.value);
+
+    if (!isNaN(qty))
+        qty = Math.abs(parseFloat(qty));
+
+    // check to see if the div exists.  If it does, remove it from the doc
+    var binDiv=document.getElementById('BinInlineDIV'+linenumber);
+	var body = document.getElementById('body') || document.body;
+    if (binDiv != null)
+	    body.removeChild(binDiv);
+
+    // create a new div
+    binDiv = document.createElement('div');
+    binDiv.style.border     = '1px solid black';
+    binDiv.style.position   = 'absolute';
+    binDiv.style.padding    = '2px';
+    binDiv.id               = 'BinInlineDIV'+linenumber;
+    binDiv.className        = 'bglt';
+    binDiv.style.display='none';
+    binDiv.style.zIndex = 1000;
+
+    // stash the target fields in the div object
+    binDiv.targetField      = fld;
+    binDiv.targetQtyField   = qtyfield;
+
+    // add the div to the page
+	body.appendChild(binDiv);
+
+    // Convert the char(5) delimited list of bins to an array
+    var unparsedBinList = binstr.split(String.fromCharCode(5));
+    var bins = []; // flat list of bins
+    var binQtyMap = []; // map of bin -> qty
+    for (var i = 0; i < unparsedBinList.length; i++)
+    {
+        var binQtyArr = parseBinQuantityString(unparsedBinList[i]);
+        if (binQtyArr != null)
+        {
+            bins[i] = binQtyArr[0];
+            binQtyMap[binQtyArr[0]] = binQtyArr[1];
+        }
+    }
+
+    // stash the count of bins in the div
+    binDiv.binCount = bins.length;
+    // convert the text in the bin numbers field into an associative array of bins->qty
+    var binFieldArr = parseBinNumbers(fld.value, bins, qty);
+
+    // write the html of the div
+    var sHtml = '<form name=\'BinInlineDivForm'+linenumber+'\'><table border=0 cellpadding=0 cellspacing=0>'+
+                '<tr><td class=text align=left><b>Bin</b></td><td nowrap class=text>&nbsp;&nbsp;</td><td class=text align=center><b>On Hand</b></td><td nowrap class=text>&nbsp;&nbsp;</td><td class=text align=center><b>Qty</b></td></tr>';
+
+    // Loop through the available bins for the item and create a row in the table with bin number and an entry field
+    // for the quantity.  The quantity is pre-populated from the associative array generated by the parseBinNumbers function.
+    for (var i=0; i < binDiv.binCount; i++)
+        sHtml += '<tr><td class=text align=left>'+bins[i]+'</td><td></td><td class=text align=center>'+binQtyMap[bins[i]]+'</td><td></td><td class=text align=right><input type=hidden name=\'BinInlineDivName'+i+'\' value='+bins[i]+'><input type=text maxlength=10 size=5 name=\'BinInlineDivQty'+i+'\' value='+(binFieldArr[bins[i]] == null ? '' : binFieldArr[bins[i]]) +'></td></tr>';
+
+    // add a button that transfers the contents of the div to the bin numbers text field by calling 'syncBinDiv' and then closes the div
+    sHtml += '</table>'+
+             '<center><INPUT type=\'button\' class=\'bgbutton\' value=\'Done\' id=\'done\' name=\'done\' onkeypress="event.cancelBubble=true;" onclick="syncBinDiv(BinInlineDivForm'+linenumber+', document.getElementById(\'BinInlineDIV'+linenumber+'\'),'+linenumber+'); document.getElementById(\'BinInlineDIV'+linenumber+'\').style.display=\'none\';"\'></center>'+
+             '</form>';
+
+    binDiv.innerHTML = sHtml;
+
+    // position the div under the bin numbers field
+    binDiv.style.left=findPosX(fld) +"px";
+    binDiv.style.top=findPosY(fld)+fld.offsetHeight - body.offsetTop + "px";
+
+    // show it!
+    binDiv.style.display='';
+}
+
+
+function syncBinDiv(form, div, linenumber)
+{
+    var fldValue = '';
+    var validQtyCount = 0;
+    var sumquantity = 0;
+    var decimalPrecision = 0;
+
+    var totalquantity = parseFloat(div.targetQtyField.value);
+    var absTotalQuantity = Math.abs(totalquantity);
+
+    // first pass through, figure out how many valid quantities there are
+    for (var i = 0; i < div.binCount; i++)
+    {
+        var qty = parseFloat(form.elements['BinInlineDivQty'+i].value);
+        if (!isNaN(qty))
+        {
+            decimalPrecision = Math.max(decimalPrecision, getUserEnteredPrecision(form.elements['BinInlineDivQty'+i].value));
+            // convert negative numbers to positive numbers
+            if (qty < 0)
+            {
+                qty = Math.abs(qty);
+                form.elements['BinInlineDivQty'+i].value = qty;
+            }
+            else if (qty > 0)
+            {
+                validQtyCount++;
+                sumquantity += qty;
+            }
+        }
+    }
+
+    // if the sum of the bin quantities is not equal to the line quantity, ERROR!
+    if (!isNaN(absTotalQuantity) && !equalsDouble(sumquantity, parseFloat(absTotalQuantity)))
+    {
+        alert('The sum of all bin quantities ('+sumquantity+') is not equal to the total line quantity ('+totalquantity+')');
+        return;
+    }
+    else if (sumquantity != 0 && isNaN(totalquantity))
+    {
+        div.targetQtyField.value = roundDecimal(sumquantity, decimalPrecision);
+        var displayFld = getNLNumericOrCurrencyDisplayField(div.targetQtyField);
+        if (displayFld != null)
+            displayFld.value = roundDecimal(sumquantity, decimalPrecision);
+    }
+
+    // second pass through, convert quantities into "BinX(QtyX)\nBinY(QtyY)..." string.
+    var hasBin = false;
+    for (var i = 0; i < div.binCount; i++)
+    {
+        var qty = parseFloat(form.elements['BinInlineDivQty'+i].value);
+        if (isNaN(qty))
+            continue;
+        // separate bins with a newline
+        if (hasBin == true)
+            fldValue += '\n';
+        fldValue += form.elements['BinInlineDivName'+i].value;
+        // If there is only one bin listed, quantity is implied.
+        // If there is more than one bin listed, we'll need to add "(Qty)" after
+        // each bin number.
+        if (validQtyCount > 1)
+            fldValue += '(' + roundDecimal(qty, decimalPrecision) + ')';
+        hasBin = true;
+    }
+    // fill out the field text
+    div.targetField.value = fldValue;
+
+    // call the onchange function of the target field
+    if (div.targetField.onchange != null)
+        div.targetField.onchange();
+}
+
+function getUserEnteredPrecision(str)
+{
+    var intVal = parseInt(str);
+    var floatVal = parseFloat(str);
+    // Only procede if the float value and the int value are not the same
+    if (!equalsDouble(intVal, floatVal))
+    {
+        // Find out how many numbers are entered after the decimal place.
+        var idx = str.indexOf('.');
+        if (idx >= 0)
+        {
+            var count = 0;
+            for (var i=idx+1; i<str.length; i++, count++)
+            {
+                if ((str.charAt(i) < '0') || (str.charAt(i) > '9'))
+                {
+                    break;
+                }
+            }
+            return count;
+        }
+    }
+    return 0;
+}
+
+
+var EPSILON = 0.000001;
+function equalsDouble(double1, double2)
+{
+    if (isNaN(double1))
+        return isNaN(double2);
+    else if (isNaN(double2))
+        return false;
+    else
+        return Math.abs(double1 - double2) < EPSILON;
+}
+
+
+function roundDecimal(num, decimalPrecision)
+{
+    var str = num.toFixed(decimalPrecision);
+    if (decimalPrecision == 0)
+    {
+        return str;
+    }
+    else
+    {
+        var end = str.length;
+        for (var i=str.length-1; true; i--)
+        {
+            if (str.charAt(i) == '.')
+            {
+                end = i;
+                break;
+            }
+            if (str.charAt(i) != '0')
+            {
+                end = i+1;
+                break;
+            }
+        }
+        return str.substring(0, end);
+    }
+}
+
+
+function parseBinNumbers(binfieldstr, binsArr, qty)
+{
+    var retArr = [];
+
+    // if no quantity was passed, assume 1
+    if (isNaN(qty))
+        qty = 1;
+
+    // first check to see if there is just a single bin with no explicit quantity
+    // if there is, return an array with the single bin and the full quantity
+    var re = new RegExp('^\\s*(\\S+)\\s*$');
+    var singleMatch = re.exec(binfieldstr);
+    if (singleMatch != null)
+    {
+        retArr[singleMatch[1]] = qty;
+        return retArr;
+    }
+
+    // go through the list of bins and find the quantity associated with each
+    for (var i = 0; i < binsArr.length; i++)
+    {
+        var bin = binsArr[i];
+        var sanitizedBin = bin.replace(/[\\\.\+\*\?\^$\[\]\(\)\{\}\/\'#\:\!\=\|]/ig, "\\\$&");
+        // create a regexp to find strings of the form "bin(qty)", where qty is a captured expression.
+        re = new RegExp('(\\n|^)'+sanitizedBin+'\\s*\\(\\s*(\\d+\\.?\\d*)\\s*\\)');
+        var matchArr = re.exec(binfieldstr);
+        if (matchArr != null)
+            retArr[bin] = matchArr[2];
+    }
+    return retArr;
+}
+
+
+function parseBinQuantityString(binstring)
+{
+    var re = new RegExp('^\\s*(\\S+)\\s*\\(\\s*(\\d+\\.?\\d*)\\s*\\)\\s*$');
+    var matchArr = re.exec(binstring);
+    if (matchArr != null)
+    {
+        matchArr.shift(); // remove the first element
+        return matchArr;
+    }
+    else
+        return null;
+}
