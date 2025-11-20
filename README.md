@@ -5,7 +5,7 @@ A static clone of the NetSuite dashboard frontend for local demonstration.
 ## Local Hosting
 
 ```bash
-cd capture/td3052522.app.netsuite.com
+cd capture/app.netsuite.com
 python3 -m http.server 8000
 ```
 

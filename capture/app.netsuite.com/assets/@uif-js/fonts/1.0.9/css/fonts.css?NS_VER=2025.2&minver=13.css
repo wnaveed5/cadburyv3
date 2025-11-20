@@ -58,7 +58,7 @@
 	font-display: fallback;
 	font-family: 'Oracle Sans';
 	font-weight: 300;
-	src: url('../resources/OracleBrand_VariableFont/WOFF2/OracleBrandVF_Tb_W_WghtWdth.woff2') format('woff2'), url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/resources/OracleSans_Web/WOFF/OracleBrand_VariableFont/WOFF2/OracleBrandVF_Tb_W_WghtWdth.woff2') format('woff')
+	src: url('../resources/OracleBrand_VariableFont/WOFF2/OracleBrandVF_Tb_W_WghtWdth.woff2') format('woff2'), url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/resources/OracleSans_Web/WOFF/OracleBrand_VariableFont/WOFF2/OracleBrandVF_Tb_W_WghtWdth.woff2') format('woff')
 }
 
 @font-face {
@@ -331,7 +331,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-ExtraLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-ExtraLight.ttf') format('truetype');
 	font-weight: 100;
 	font-style: normal
 }
@@ -339,7 +339,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-ExtraLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-ExtraLight.ttf') format('truetype');
 	font-weight: 200;
 	font-style: normal
 }
@@ -347,7 +347,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-Light.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-Light.ttf') format('truetype');
 	font-weight: 300;
 	font-style: normal
 }
@@ -355,7 +355,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-Regular.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-Regular.ttf') format('truetype');
 	font-weight: 400;
 	font-style: normal
 }
@@ -363,7 +363,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-Regular.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-Regular.ttf') format('truetype');
 	font-weight: 500;
 	font-style: normal
 }
@@ -371,7 +371,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-SemiBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-SemiBold.ttf') format('truetype');
 	font-weight: 600;
 	font-style: normal
 }
@@ -379,7 +379,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-Bold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-Bold.ttf') format('truetype');
 	font-weight: 700;
 	font-style: normal
 }
@@ -387,7 +387,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-ExtraBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-ExtraBold.ttf') format('truetype');
 	font-weight: 800;
 	font-style: normal
 }
@@ -395,7 +395,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-ExtraBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-ExtraBold.ttf') format('truetype');
 	font-weight: 900;
 	font-style: normal
 }
@@ -403,7 +403,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-CondensedLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-CondensedLight.ttf') format('truetype');
 	font-weight: 100;
 	font-style: normal;
 	font-stretch: condensed
@@ -412,7 +412,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-CondensedLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-CondensedLight.ttf') format('truetype');
 	font-weight: 200;
 	font-style: normal;
 	font-stretch: condensed
@@ -421,7 +421,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-CondensedLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-CondensedLight.ttf') format('truetype');
 	font-weight: 300;
 	font-style: normal;
 	font-stretch: condensed
@@ -430,7 +430,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-Condensed.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-Condensed.ttf') format('truetype');
 	font-weight: 400;
 	font-style: normal;
 	font-stretch: condensed
@@ -439,7 +439,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-Condensed.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-Condensed.ttf') format('truetype');
 	font-weight: 500;
 	font-style: normal;
 	font-stretch: condensed
@@ -448,7 +448,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-Condensed.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-Condensed.ttf') format('truetype');
 	font-weight: 600;
 	font-style: normal;
 	font-stretch: condensed
@@ -457,7 +457,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-CondensedBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-CondensedBold.ttf') format('truetype');
 	font-weight: 700;
 	font-style: normal;
 	font-stretch: condensed
@@ -466,7 +466,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-CondensedBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-CondensedBold.ttf') format('truetype');
 	font-weight: 800;
 	font-style: normal;
 	font-stretch: condensed
@@ -475,7 +475,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-CondensedBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabic-CondensedBold.ttf') format('truetype');
 	font-weight: 900;
 	font-style: normal;
 	font-stretch: condensed
@@ -484,7 +484,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-ExtraLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-ExtraLight.ttf') format('truetype');
 	font-weight: 100;
 	font-style: normal
 }
@@ -492,7 +492,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-ExtraLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-ExtraLight.ttf') format('truetype');
 	font-weight: 200;
 	font-style: normal
 }
@@ -500,7 +500,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-Light.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-Light.ttf') format('truetype');
 	font-weight: 300;
 	font-style: normal
 }
@@ -508,7 +508,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-Regular.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-Regular.ttf') format('truetype');
 	font-weight: 400;
 	font-style: normal
 }
@@ -516,7 +516,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-Regular.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-Regular.ttf') format('truetype');
 	font-weight: 500;
 	font-style: normal
 }
@@ -524,7 +524,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-SemiBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-SemiBold.ttf') format('truetype');
 	font-weight: 600;
 	font-style: normal
 }
@@ -532,7 +532,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-Bold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-Bold.ttf') format('truetype');
 	font-weight: 700;
 	font-style: normal
 }
@@ -540,7 +540,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-ExtraBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-ExtraBold.ttf') format('truetype');
 	font-weight: 800;
 	font-style: normal
 }
@@ -548,7 +548,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-ExtraBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-ExtraBold.ttf') format('truetype');
 	font-weight: 900;
 	font-style: normal
 }
@@ -556,7 +556,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-CondensedLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-CondensedLight.ttf') format('truetype');
 	font-weight: 100;
 	font-style: normal;
 	font-stretch: condensed
@@ -565,7 +565,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-CondensedLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-CondensedLight.ttf') format('truetype');
 	font-weight: 200;
 	font-style: normal;
 	font-stretch: condensed
@@ -574,7 +574,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-CondensedLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-CondensedLight.ttf') format('truetype');
 	font-weight: 300;
 	font-style: normal;
 	font-stretch: condensed
@@ -583,7 +583,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-Condensed.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-Condensed.ttf') format('truetype');
 	font-weight: 400;
 	font-style: normal;
 	font-stretch: condensed
@@ -592,7 +592,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-Condensed.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-Condensed.ttf') format('truetype');
 	font-weight: 500;
 	font-style: normal;
 	font-stretch: condensed
@@ -601,7 +601,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-Condensed.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-Condensed.ttf') format('truetype');
 	font-weight: 600;
 	font-style: normal;
 	font-stretch: condensed
@@ -610,7 +610,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-CondensedBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-CondensedBold.ttf') format('truetype');
 	font-weight: 700;
 	font-style: normal;
 	font-stretch: condensed
@@ -619,7 +619,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-CondensedBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-CondensedBold.ttf') format('truetype');
 	font-weight: 800;
 	font-style: normal;
 	font-stretch: condensed
@@ -628,7 +628,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Arabic UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-CondensedBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Arabic/NotoSansArabicUI-CondensedBold.ttf') format('truetype');
 	font-weight: 900;
 	font-style: normal;
 	font-stretch: condensed
@@ -637,7 +637,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Hebrew';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-ExtraLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-ExtraLight.ttf') format('truetype');
 	font-weight: 100;
 	font-style: normal
 }
@@ -645,7 +645,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Hebrew';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-ExtraLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-ExtraLight.ttf') format('truetype');
 	font-weight: 200;
 	font-style: normal
 }
@@ -653,7 +653,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Hebrew';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-Light.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-Light.ttf') format('truetype');
 	font-weight: 300;
 	font-style: normal
 }
@@ -661,7 +661,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Hebrew';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-Regular.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-Regular.ttf') format('truetype');
 	font-weight: 400;
 	font-style: normal
 }
@@ -669,7 +669,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Hebrew';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-Regular.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-Regular.ttf') format('truetype');
 	font-weight: 500;
 	font-style: normal
 }
@@ -677,7 +677,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Hebrew';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-SemiBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-SemiBold.ttf') format('truetype');
 	font-weight: 600;
 	font-style: normal
 }
@@ -685,7 +685,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Hebrew';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-Bold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-Bold.ttf') format('truetype');
 	font-weight: 700;
 	font-style: normal
 }
@@ -693,7 +693,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Hebrew';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-ExtraBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-ExtraBold.ttf') format('truetype');
 	font-weight: 800;
 	font-style: normal
 }
@@ -701,7 +701,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Hebrew';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-ExtraBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-ExtraBold.ttf') format('truetype');
 	font-weight: 900;
 	font-style: normal
 }
@@ -709,7 +709,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Hebrew';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-CondensedLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-CondensedLight.ttf') format('truetype');
 	font-weight: 100;
 	font-style: normal;
 	font-stretch: condensed
@@ -718,7 +718,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Hebrew';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-CondensedLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-CondensedLight.ttf') format('truetype');
 	font-weight: 200;
 	font-style: normal;
 	font-stretch: condensed
@@ -727,7 +727,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Hebrew';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-CondensedLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-CondensedLight.ttf') format('truetype');
 	font-weight: 300;
 	font-style: normal;
 	font-stretch: condensed
@@ -736,7 +736,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Hebrew';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-Condensed.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-Condensed.ttf') format('truetype');
 	font-weight: 400;
 	font-style: normal;
 	font-stretch: condensed
@@ -745,7 +745,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Hebrew';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-Condensed.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-Condensed.ttf') format('truetype');
 	font-weight: 500;
 	font-style: normal;
 	font-stretch: condensed
@@ -754,7 +754,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Hebrew';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-Condensed.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-Condensed.ttf') format('truetype');
 	font-weight: 600;
 	font-style: normal;
 	font-stretch: condensed
@@ -763,7 +763,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Hebrew';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-CondensedBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-CondensedBold.ttf') format('truetype');
 	font-weight: 700;
 	font-style: normal;
 	font-stretch: condensed
@@ -772,7 +772,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Hebrew';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-CondensedBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-CondensedBold.ttf') format('truetype');
 	font-weight: 800;
 	font-style: normal;
 	font-stretch: condensed
@@ -781,7 +781,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Hebrew';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-CondensedBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Hebrew/NotoSansHebrew-CondensedBold.ttf') format('truetype');
 	font-weight: 900;
 	font-style: normal;
 	font-stretch: condensed
@@ -790,7 +790,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans JP';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/JP/NotoSansJP-Light.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/JP/NotoSansJP-Light.otf') format('opentype');
 	font-weight: 100;
 	font-style: normal
 }
@@ -798,7 +798,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans JP';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/JP/NotoSansJP-Light.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/JP/NotoSansJP-Light.otf') format('opentype');
 	font-weight: 200;
 	font-style: normal
 }
@@ -806,7 +806,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans JP';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/JP/NotoSansJP-Light.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/JP/NotoSansJP-Light.otf') format('opentype');
 	font-weight: 300;
 	font-style: normal
 }
@@ -814,7 +814,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans JP';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/JP/NotoSansJP-Regular.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/JP/NotoSansJP-Regular.otf') format('opentype');
 	font-weight: 400;
 	font-style: normal
 }
@@ -822,7 +822,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans JP';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/JP/NotoSansJP-Regular.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/JP/NotoSansJP-Regular.otf') format('opentype');
 	font-weight: 500;
 	font-style: normal
 }
@@ -830,7 +830,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans JP';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/JP/NotoSansJP-Regular.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/JP/NotoSansJP-Regular.otf') format('opentype');
 	font-weight: 600;
 	font-style: normal
 }
@@ -838,7 +838,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans JP';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/JP/NotoSansJP-Bold.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/JP/NotoSansJP-Bold.otf') format('opentype');
 	font-weight: 700;
 	font-style: normal
 }
@@ -846,7 +846,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans JP';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/JP/NotoSansJP-Bold.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/JP/NotoSansJP-Bold.otf') format('opentype');
 	font-weight: 800;
 	font-style: normal
 }
@@ -854,7 +854,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans JP';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/JP/NotoSansJP-Bold.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/JP/NotoSansJP-Bold.otf') format('opentype');
 	font-weight: 900;
 	font-style: normal
 }
@@ -862,7 +862,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans KR';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/KR/NotoSansKR-Light.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/KR/NotoSansKR-Light.otf') format('opentype');
 	font-weight: 100;
 	font-style: normal
 }
@@ -870,7 +870,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans KR';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/KR/NotoSansKR-Light.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/KR/NotoSansKR-Light.otf') format('opentype');
 	font-weight: 200;
 	font-style: normal
 }
@@ -878,7 +878,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans KR';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/KR/NotoSansKR-Light.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/KR/NotoSansKR-Light.otf') format('opentype');
 	font-weight: 300;
 	font-style: normal
 }
@@ -886,7 +886,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans KR';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/KR/NotoSansKR-Regular.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/KR/NotoSansKR-Regular.otf') format('opentype');
 	font-weight: 400;
 	font-style: normal
 }
@@ -894,7 +894,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans KR';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/KR/NotoSansKR-Regular.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/KR/NotoSansKR-Regular.otf') format('opentype');
 	font-weight: 500;
 	font-style: normal
 }
@@ -902,7 +902,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans KR';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/KR/NotoSansKR-Regular.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/KR/NotoSansKR-Regular.otf') format('opentype');
 	font-weight: 600;
 	font-style: normal
 }
@@ -910,7 +910,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans KR';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/KR/NotoSansKR-Bold.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/KR/NotoSansKR-Bold.otf') format('opentype');
 	font-weight: 700;
 	font-style: normal
 }
@@ -918,7 +918,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans KR';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/KR/NotoSansKR-Bold.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/KR/NotoSansKR-Bold.otf') format('opentype');
 	font-weight: 800;
 	font-style: normal
 }
@@ -926,7 +926,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans KR';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/KR/NotoSansKR-Bold.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/KR/NotoSansKR-Bold.otf') format('opentype');
 	font-weight: 900;
 	font-style: normal
 }
@@ -934,7 +934,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans SC';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/SC/NotoSansSC-Light.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/SC/NotoSansSC-Light.otf') format('opentype');
 	font-weight: 100;
 	font-style: normal
 }
@@ -942,7 +942,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans SC';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/SC/NotoSansSC-Light.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/SC/NotoSansSC-Light.otf') format('opentype');
 	font-weight: 200;
 	font-style: normal
 }
@@ -950,7 +950,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans SC';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/SC/NotoSansSC-Light.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/SC/NotoSansSC-Light.otf') format('opentype');
 	font-weight: 300;
 	font-style: normal
 }
@@ -958,7 +958,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans SC';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/SC/NotoSansSC-Regular.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/SC/NotoSansSC-Regular.otf') format('opentype');
 	font-weight: 400;
 	font-style: normal
 }
@@ -966,7 +966,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans SC';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/SC/NotoSansSC-Regular.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/SC/NotoSansSC-Regular.otf') format('opentype');
 	font-weight: 500;
 	font-style: normal
 }
@@ -974,7 +974,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans SC';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/SC/NotoSansSC-Regular.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/SC/NotoSansSC-Regular.otf') format('opentype');
 	font-weight: 600;
 	font-style: normal
 }
@@ -982,7 +982,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans SC';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/SC/NotoSansSC-Bold.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/SC/NotoSansSC-Bold.otf') format('opentype');
 	font-weight: 700;
 	font-style: normal
 }
@@ -990,7 +990,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans SC';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/SC/NotoSansSC-Bold.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/SC/NotoSansSC-Bold.otf') format('opentype');
 	font-weight: 800;
 	font-style: normal
 }
@@ -998,7 +998,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans SC';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/SC/NotoSansSC-Bold.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/SC/NotoSansSC-Bold.otf') format('opentype');
 	font-weight: 900;
 	font-style: normal
 }
@@ -1006,7 +1006,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans TC';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/TC/NotoSansTC-Light.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/TC/NotoSansTC-Light.otf') format('opentype');
 	font-weight: 100;
 	font-style: normal
 }
@@ -1014,7 +1014,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans TC';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/TC/NotoSansTC-Light.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/TC/NotoSansTC-Light.otf') format('opentype');
 	font-weight: 200;
 	font-style: normal
 }
@@ -1022,7 +1022,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans TC';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/TC/NotoSansTC-Light.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/TC/NotoSansTC-Light.otf') format('opentype');
 	font-weight: 300;
 	font-style: normal
 }
@@ -1030,7 +1030,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans TC';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/TC/NotoSansTC-Regular.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/TC/NotoSansTC-Regular.otf') format('opentype');
 	font-weight: 400;
 	font-style: normal
 }
@@ -1038,7 +1038,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans TC';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/TC/NotoSansTC-Regular.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/TC/NotoSansTC-Regular.otf') format('opentype');
 	font-weight: 500;
 	font-style: normal
 }
@@ -1046,7 +1046,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans TC';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/TC/NotoSansTC-Regular.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/TC/NotoSansTC-Regular.otf') format('opentype');
 	font-weight: 600;
 	font-style: normal
 }
@@ -1054,7 +1054,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans TC';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/TC/NotoSansTC-Bold.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/TC/NotoSansTC-Bold.otf') format('opentype');
 	font-weight: 700;
 	font-style: normal
 }
@@ -1062,7 +1062,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans TC';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/TC/NotoSansTC-Bold.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/TC/NotoSansTC-Bold.otf') format('opentype');
 	font-weight: 800;
 	font-style: normal
 }
@@ -1070,7 +1070,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans TC';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/TC/NotoSansTC-Bold.otf') format('opentype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/TC/NotoSansTC-Bold.otf') format('opentype');
 	font-weight: 900;
 	font-style: normal
 }
@@ -1078,7 +1078,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-ExtraLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-ExtraLight.ttf') format('truetype');
 	font-weight: 100;
 	font-style: normal
 }
@@ -1086,7 +1086,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-ExtraLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-ExtraLight.ttf') format('truetype');
 	font-weight: 200;
 	font-style: normal
 }
@@ -1094,7 +1094,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-Light.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-Light.ttf') format('truetype');
 	font-weight: 300;
 	font-style: normal
 }
@@ -1102,7 +1102,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-Regular.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-Regular.ttf') format('truetype');
 	font-weight: 400;
 	font-style: normal
 }
@@ -1110,7 +1110,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-Regular.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-Regular.ttf') format('truetype');
 	font-weight: 500;
 	font-style: normal
 }
@@ -1118,7 +1118,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-SemiBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-SemiBold.ttf') format('truetype');
 	font-weight: 600;
 	font-style: normal
 }
@@ -1126,7 +1126,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-Bold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-Bold.ttf') format('truetype');
 	font-weight: 700;
 	font-style: normal
 }
@@ -1134,7 +1134,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-ExtraBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-ExtraBold.ttf') format('truetype');
 	font-weight: 800;
 	font-style: normal
 }
@@ -1142,7 +1142,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-ExtraBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-ExtraBold.ttf') format('truetype');
 	font-weight: 900;
 	font-style: normal
 }
@@ -1150,7 +1150,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-CondensedLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-CondensedLight.ttf') format('truetype');
 	font-weight: 100;
 	font-style: normal;
 	font-stretch: condensed
@@ -1159,7 +1159,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-CondensedLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-CondensedLight.ttf') format('truetype');
 	font-weight: 200;
 	font-style: normal;
 	font-stretch: condensed
@@ -1168,7 +1168,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-CondensedLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-CondensedLight.ttf') format('truetype');
 	font-weight: 300;
 	font-style: normal;
 	font-stretch: condensed
@@ -1177,7 +1177,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-Condensed.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-Condensed.ttf') format('truetype');
 	font-weight: 400;
 	font-style: normal;
 	font-stretch: condensed
@@ -1186,7 +1186,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-Condensed.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-Condensed.ttf') format('truetype');
 	font-weight: 500;
 	font-style: normal;
 	font-stretch: condensed
@@ -1195,7 +1195,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-Condensed.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-Condensed.ttf') format('truetype');
 	font-weight: 600;
 	font-style: normal;
 	font-stretch: condensed
@@ -1204,7 +1204,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-CondensedBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-CondensedBold.ttf') format('truetype');
 	font-weight: 700;
 	font-style: normal;
 	font-stretch: condensed
@@ -1213,7 +1213,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-CondensedBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-CondensedBold.ttf') format('truetype');
 	font-weight: 800;
 	font-style: normal;
 	font-stretch: condensed
@@ -1222,7 +1222,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-CondensedBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThai-CondensedBold.ttf') format('truetype');
 	font-weight: 900;
 	font-style: normal;
 	font-stretch: condensed
@@ -1231,7 +1231,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-ExtraLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-ExtraLight.ttf') format('truetype');
 	font-weight: 100;
 	font-style: normal
 }
@@ -1239,7 +1239,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-ExtraLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-ExtraLight.ttf') format('truetype');
 	font-weight: 200;
 	font-style: normal
 }
@@ -1247,7 +1247,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-Light.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-Light.ttf') format('truetype');
 	font-weight: 300;
 	font-style: normal
 }
@@ -1255,7 +1255,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-Regular.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-Regular.ttf') format('truetype');
 	font-weight: 400;
 	font-style: normal
 }
@@ -1263,7 +1263,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-Regular.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-Regular.ttf') format('truetype');
 	font-weight: 500;
 	font-style: normal
 }
@@ -1271,7 +1271,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-SemiBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-SemiBold.ttf') format('truetype');
 	font-weight: 600;
 	font-style: normal
 }
@@ -1279,7 +1279,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-Bold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-Bold.ttf') format('truetype');
 	font-weight: 700;
 	font-style: normal
 }
@@ -1287,7 +1287,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-ExtraBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-ExtraBold.ttf') format('truetype');
 	font-weight: 800;
 	font-style: normal
 }
@@ -1295,7 +1295,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-ExtraBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-ExtraBold.ttf') format('truetype');
 	font-weight: 900;
 	font-style: normal
 }
@@ -1303,7 +1303,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-CondensedLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-CondensedLight.ttf') format('truetype');
 	font-weight: 100;
 	font-style: normal;
 	font-stretch: condensed
@@ -1312,7 +1312,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-CondensedLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-CondensedLight.ttf') format('truetype');
 	font-weight: 200;
 	font-style: normal;
 	font-stretch: condensed
@@ -1321,7 +1321,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-CondensedLight.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-CondensedLight.ttf') format('truetype');
 	font-weight: 300;
 	font-style: normal;
 	font-stretch: condensed
@@ -1330,7 +1330,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-Condensed.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-Condensed.ttf') format('truetype');
 	font-weight: 400;
 	font-style: normal;
 	font-stretch: condensed
@@ -1339,7 +1339,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-Condensed.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-Condensed.ttf') format('truetype');
 	font-weight: 500;
 	font-style: normal;
 	font-stretch: condensed
@@ -1348,7 +1348,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-Condensed.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-Condensed.ttf') format('truetype');
 	font-weight: 600;
 	font-style: normal;
 	font-stretch: condensed
@@ -1357,7 +1357,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-CondensedBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-CondensedBold.ttf') format('truetype');
 	font-weight: 700;
 	font-style: normal;
 	font-stretch: condensed
@@ -1366,7 +1366,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-CondensedBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-CondensedBold.ttf') format('truetype');
 	font-weight: 800;
 	font-style: normal;
 	font-stretch: condensed
@@ -1375,7 +1375,7 @@
 @font-face {
 	font-display: fallback;
 	font-family: 'Noto Sans Thai UI';
-	src: url('https://td3052522.app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-CondensedBold.ttf') format('truetype');
+	src: url('https://app.netsuite.com/assets/@uif-js/fonts/1.0.9/css/NotoSans/Thai/NotoSansThaiUI-CondensedBold.ttf') format('truetype');
 	font-weight: 900;
 	font-style: normal;
 	font-stretch: condensed

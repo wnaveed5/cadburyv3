@@ -799,7 +799,7 @@ a.newbar:hover .ri_bill			{ background-position: -75px -1350px; }
 .clm_roll .clm_left,
 .clm_roll .clm_body,
 .clm_roll .clm_right,
-.clm_tri { background-image: url(https://td3052522.app.netsuite.com/images/chiles/crosslinkmenu.png); color: #5C7499; }
+.clm_tri { background-image: url(https://app.netsuite.com/images/chiles/crosslinkmenu.png); color: #5C7499; }
 .clm_tri { display: inline-block; background-position: 0 -94px; width: 5px; margin-left: 5px; zoom: 1; }
 
 .clm,

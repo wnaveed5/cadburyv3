@@ -1,7 +1,7 @@
 {
   "version": 2,
   "buildCommand": null,
-  "outputDirectory": "capture/td3052522.app.netsuite.com",
+  "outputDirectory": "capture/app.netsuite.com",
   "rewrites": [
     {
       "source": "/(.*)",
