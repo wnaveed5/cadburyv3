@@ -2,11 +2,7 @@
   "version": 2,
   "buildCommand": null,
   "outputDirectory": "capture/app.netsuite.com",
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/$1"
-    }
-  ]
+  "cleanUrls": false,
+  "trailingSlash": false
 }
 
