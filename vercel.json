@@ -3,6 +3,12 @@
   "buildCommand": null,
   "outputDirectory": "capture/app.netsuite.com",
   "cleanUrls": false,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/app/center/card.nl.html"
+    }
+  ]
 }
 
