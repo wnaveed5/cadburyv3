@@ -1,0 +1,2 @@
+var NS=window.NS||{};NS.Help=NS.Help||{};(function(c){c.getHelpUrl=function(a){var b="";a&&a.taskId&&(b=a.taskId);a="/app/help/helpcenter.nl?";if(b){var d=0===b.indexOf("uber_");a+=d?"search="+b.substring(5):"topic="+b}return a};c.openHelpTopic=function(a){window.open(c.getHelpUrl(a),"_blank").focus()}})(NS.Help);
+//# sourceMappingURL=/assets/help_center_service/3696101135.map
