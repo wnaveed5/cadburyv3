@@ -149,8 +149,11 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             min-height: 52px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 4px;
         }
         #ns-static-menubar .ns-static-nav-item {
             display: inline-flex;
@@ -165,6 +168,7 @@
             border: none;
             background: transparent;
             cursor: pointer;
+            flex: 0 0 auto;
         }
         #ns-static-menubar .ns-static-nav-item svg {
             width: 18px;
