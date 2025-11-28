@@ -1,13 +1,12 @@
 {
   "version": 2,
   "buildCommand": null,
-  "outputDirectory": "capture/app.netsuite.com",
   "cleanUrls": false,
   "trailingSlash": false,
   "rewrites": [
     {
       "source": "/",
-      "destination": "/app/center/card.nl.html"
+      "destination": "/Files/dashboard.html"
     }
   ]
 }
