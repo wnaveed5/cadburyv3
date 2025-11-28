@@ -1,20 +1,21 @@
-# NetSuite Static Frontend Clone
+NetSuite Static Frontend Clone
 
-A static clone of the NetSuite dashboard frontend for local demonstration.
+A lightweight static copy of the NetSuite dashboard UI for local demos.
 
-## Local Hosting
-
-```bash
+Run Locally (Chrome)
 cd capture/app.netsuite.com
 python3 -m http.server 8000
-```
 
-Open: `http://localhost:8000/app/center/card.nl.html`
 
-(If port 8000 is in use, try a different port like 8001, 3000, etc.)
+Then open in Google Chrome:
 
-## Notes
+http://localhost:8000/app/center/card.nl.html
 
-- Backend operations (save/submit) are disabled
-- View-only demonstration
 
+(Use another port if 8000 is taken: 8080, 8001, 3000, etc.)
+
+Notes
+
+Frontend only — no backend or saving.
+
+View-only demo.
