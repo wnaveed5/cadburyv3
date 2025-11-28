@@ -6,6 +6,30 @@
     {
       "source": "/",
       "destination": "/Files/index.html"
+    },
+    {
+      "source": "/index.html",
+      "destination": "/Files/index.html"
+    },
+    {
+      "source": "/list_of_pu.html",
+      "destination": "/Files/list_of_pu.html"
+    },
+    {
+      "source": "/list_of_sales.html",
+      "destination": "/Files/list_of_sales.html"
+    },
+    {
+      "source": "/list_of_invoices.html",
+      "destination": "/Files/list_of_invoices.html"
+    },
+    {
+      "source": "/list_of_quotes.html",
+      "destination": "/Files/list_of_quotes.html"
+    },
+    {
+      "source": "/general_pref.html",
+      "destination": "/Files/general_pref.html"
     }
   ]
 }
