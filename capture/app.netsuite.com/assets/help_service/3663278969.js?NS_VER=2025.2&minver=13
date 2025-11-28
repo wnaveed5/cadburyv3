@@ -1,3 +1,0 @@
-var NS=window.NS||{};NS.Help=NS.Help||{};
-(function(g){function h(b,c){return b.filter(function(a){return 0>c.indexOf(a)})}g.getFieldHelpUrl=function(b){var c=NS.Help.flhUrlParams,a="/core/help/fieldhelp.nl?";b.isEdit&&(a="/core/help/admin/helpfieldeditform.nl?");a=a+c.FIELD_ID.value+"="+b.fieldId;var f=Object.keys(c);f.forEach(function(d){var e=b.parameters[d];e&&(a=a+"&"+c[d].value+"="+e)});h(Object.keys(b.parameters),f).forEach(function(d){var e=b.parameters[d];e&&(a=a+"&"+d+"="+e)});return a=a+"&NS_VER="+NS.Help.nsVersion}})(NS.Help);
-//# sourceMappingURL=/assets/help_service/3663278969.map
