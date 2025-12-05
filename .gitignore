@@ -2,3 +2,7 @@
 .DS_Store
 *.DS_Store
 node_modules/
+
+# NetSuite login script data
+scripts/browser-data/
+scripts/netsuite-cookies.json

@@ -5,7 +5,13 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "clean:header": "node src/cleanHeader.js"
+    "clean:header": "node src/cleanHeader.js",
+    "capture:nav": "node scripts/captureNavStates.js",
+    "capture:manual": "node scripts/manualCapture.js",
+    "open:netsuite": "node scripts/open-netsuite-puppeteer.js",
+    "extract:navbar": "node scripts/extract-navbar-puppeteer.js",
+    "capture:hover": "node scripts/capture-hover-dropdown-puppeteer.js",
+    "login:netsuite": "node scripts/netsuite-login.js"
   },
   "repository": {
     "type": "git",
@@ -21,6 +27,7 @@
   "homepage": "https://github.com/wnaveed5/cadburyv3#readme",
   "dependencies": {
     "cheerio": "^1.1.2",
-    "playwright": "^1.57.0"
+    "playwright": "^1.57.0",
+    "puppeteer": "^24.32.0"
   }
 }
